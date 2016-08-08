@@ -3269,212 +3269,223 @@ if (typeof chrome === 'object' && typeof chrome.identity === 'object' && chrome.
 
 (function(hello) {
 
-	hello.init({
+    hello.init({
 
-		facebook: {
+        facebook: {
 
-			name: 'Facebook',
+            name: 'Facebook',
 
-			// SEE https://developers.facebook.com/docs/facebook-login/manually-build-a-login-flow/v2.1
-			oauth: {
-				version: 2,
-				auth: 'https://www.facebook.com/dialog/oauth/',
-				grant: 'https://graph.facebook.com/oauth/access_token'
-			},
+            // SEE https://developers.facebook.com/docs/facebook-login/manually-build-a-login-flow/v2.1
+            oauth: {
+                version: 2,
+                auth: 'https://www.facebook.com/dialog/oauth/',
+                grant: 'https://graph.facebook.com/oauth/access_token'
+            },
 
-			// Authorization scopes
-			scope: {
-				basic: 'public_profile',
-				email: 'email',
-				share: 'user_posts',
-				birthday: 'user_birthday',
-				events: 'user_events',
-				photos: 'user_photos',
-				videos: 'user_videos',
-				friends: 'user_friends',
-				files: 'user_photos,user_videos',
-				publish_files: 'user_photos,user_videos,publish_actions',
-				publish: 'publish_actions',
+            // Authorization scopes
+            scope: {
+                basic: 'public_profile',
+                email: 'email',
+                share: 'user_posts',
+                birthday: 'user_birthday',
+                events: 'user_events',
+                photos: 'user_photos',
+                videos: 'user_videos',
+                friends: 'user_friends',
+                files: 'user_photos,user_videos',
+                publish_files: 'user_photos,user_videos,publish_actions',
+                publish: 'publish_actions',
 
-				// Deprecated in v2.0
-				// Create_event	: 'create_event',
+                // Deprecated in v2.0
+                // Create_event : 'create_event',
 
-				offline_access: ''
-			},
+                offline_access: ''
+            },
 
-			// Refresh the access_token
-			refresh: true,
+            // Refresh the access_token
+            refresh: true,
 
-			login: function(p) {
+            login: function(p) {
 
-				// Reauthenticate
-				// https://developers.facebook.com/docs/facebook-login/reauthentication
-				if (p.options.force) {
-					p.qs.auth_type = 'reauthenticate';
-				}
+                // Reauthenticate
+                // https://developers.facebook.com/docs/facebook-login/reauthentication
+                if (p.options.force) {
+                    p.qs.auth_type = 'reauthenticate';
+                }
+            },
 
-				// The facebook login window is a different size.
-				p.options.popup.width = 580;
-				p.options.popup.height = 400;
-			},
+            logout: function(callback, options) {
+                // Assign callback to a global handler
+                var callbackID = hello.utils.globalEvent(callback);
+                var redirect = encodeURIComponent(hello.settings.redirect_uri + '?' + hello.utils.param({ callback: callbackID, result: JSON.stringify({ force: true }), state: '{}' }));
+                var token = (options.authResponse || {}).access_token;
+                hello.utils.iframe('https://www.facebook.com/logout.php?next=' + redirect + '&access_token=' + token);
 
-			logout: function(callback, options) {
-				// Assign callback to a global handler
-				var callbackID = hello.utils.globalEvent(callback);
-				var redirect = encodeURIComponent(hello.settings.redirect_uri + '?' + hello.utils.param({callback:callbackID, result: JSON.stringify({force:true}), state: '{}'}));
-				var token = (options.authResponse || {}).access_token;
-				hello.utils.iframe('https://www.facebook.com/logout.php?next=' + redirect + '&access_token=' + token);
+                // Possible responses:
+                // String URL   - hello.logout should handle the logout
+                // Undefined    - this function will handle the callback
+                // True - throw a success, this callback isn't handling the callback
+                // False - throw a error
+                if (!token) {
+                    // If there isn't a token, the above wont return a response, so lets trigger a response
+                    return false;
+                }
+            },
 
-				// Possible responses:
-				// String URL	- hello.logout should handle the logout
-				// Undefined	- this function will handle the callback
-				// True - throw a success, this callback isn't handling the callback
-				// False - throw a error
-				if (!token) {
-					// If there isn't a token, the above wont return a response, so lets trigger a response
-					return false;
-				}
-			},
+            // API Base URL
+            base: 'https://graph.facebook.com/v2.6/',
 
-			// API Base URL
-			base: 'https://graph.facebook.com/v2.4/',
+            // Map GET requests
+            get: {
+                me: 'me?fields=email,first_name,last_name,name,timezone,verified',
+                'me/friends': 'me/friends',
+                'me/following': 'me/friends',
+                'me/followers': 'me/friends',
+                'me/share': 'me/feed',
+                'me/like': 'me/likes',
+                'me/files': 'me/albums',
+                'me/albums': 'me/albums?fields=cover_photo,name',
+                'me/album': '@{id}/photos?fields=picture',
+                'me/photos': 'me/photos',
+                'me/photo': '@{id}',
+                'friend/albums': '@{id}/albums',
+                'friend/photos': '@{id}/photos',
+                list: 'me/accounts?fields=id,name&limit=400'
+                    // Pagination
+                    // Https://developers.facebook.com/docs/reference/api/pagination/
+            },
 
-			// Map GET requests
-			get: {
-				me: 'me?fields=email,first_name,last_name,name,timezone,verified',
-				'me/friends': 'me/friends',
-				'me/following': 'me/friends',
-				'me/followers': 'me/friends',
-				'me/share': 'me/feed',
-				'me/like': 'me/likes',
-				'me/files': 'me/albums',
-				'me/albums': 'me/albums?fields=cover_photo,name',
-				'me/album': '@{id}/photos?fields=picture',
-				'me/photos': 'me/photos',
-				'me/photo': '@{id}',
-				'friend/albums': '@{id}/albums',
-				'friend/photos': '@{id}/photos'
+            // Map POST requests
+            post: {
+                'me/share': 'me/feed',
+                'me/photo': '@{id}'
 
-				// Pagination
-				// Https://developers.facebook.com/docs/reference/api/pagination/
-			},
+                // Https://developers.facebook.com/docs/graph-api/reference/v2.2/object/likes/
+            },
 
-			// Map POST requests
-			post: {
-				'me/share': 'me/feed',
-				'me/photo': '@{id}'
+            wrap: {
+                me: formatUser,
+                'me/friends': formatFriends,
+                'me/following': formatFriends,
+                'me/followers': formatFriends,
+                'me/albums': format,
+                'me/photos': format,
+                'me/files': format,
+                'default': format,
+                list: function(res) {
+                    if (res.error) {
+                        return res;
+                    }
+                    if (!res.data.length) {
+                        return {
+                            error: {
+                                message: 'you have no pages'
+                            }
+                        }
+                    }
+                    var data = res.data;
+                    return {
+                        data: data
+                    };
+                }
+            },
 
-				// Https://developers.facebook.com/docs/graph-api/reference/v2.2/object/likes/
-			},
+            // Special requirements for handling XHR
+            xhr: function(p, qs) {
+                if (p.method === 'get' || p.method === 'post') {
+                    qs.suppress_response_codes = true;
+                }
 
-			wrap: {
-				me: formatUser,
-				'me/friends': formatFriends,
-				'me/following': formatFriends,
-				'me/followers': formatFriends,
-				'me/albums': format,
-				'me/photos': format,
-				'me/files': format,
-				'default': format
-			},
+                // Is this a post with a data-uri?
+                if (p.method === 'post' && p.data && typeof(p.data.file) === 'string') {
+                    // Convert the Data-URI to a Blob
+                    p.data.file = hello.utils.toBlob(p.data.file);
+                }
 
-			// Special requirements for handling XHR
-			xhr: function(p, qs) {
-				if (p.method === 'get' || p.method === 'post') {
-					qs.suppress_response_codes = true;
-				}
+                return true;
+            },
 
-				// Is this a post with a data-uri?
-				if (p.method === 'post' && p.data && typeof (p.data.file) === 'string') {
-					// Convert the Data-URI to a Blob
-					p.data.file = hello.utils.toBlob(p.data.file);
-				}
+            // Special requirements for handling JSONP fallback
+            jsonp: function(p, qs) {
+                var m = p.method;
+                if (m !== 'get' && !hello.utils.hasBinary(p.data)) {
+                    p.data.method = m;
+                    p.method = 'get';
+                } else if (p.method === 'delete') {
+                    qs.method = 'delete';
+                    p.method = 'post';
+                }
+            },
 
-				return true;
-			},
+            // Special requirements for iframe form hack
+            form: function(p) {
+                return {
+                    // Fire the callback onload
+                    callbackonload: true
+                };
+            }
+        }
+    });
 
-			// Special requirements for handling JSONP fallback
-			jsonp: function(p, qs) {
-				var m = p.method;
-				if (m !== 'get' && !hello.utils.hasBinary(p.data)) {
-					p.data.method = m;
-					p.method = 'get';
-				}
-				else if (p.method === 'delete') {
-					qs.method = 'delete';
-					p.method = 'post';
-				}
-			},
+    var base = 'https://graph.facebook.com/';
 
-			// Special requirements for iframe form hack
-			form: function(p) {
-				return {
-					// Fire the callback onload
-					callbackonload: true
-				};
-			}
-		}
-	});
+    function formatUser(o) {
+        if (o.id) {
+            o.thumbnail = o.picture = 'https://graph.facebook.com/' + o.id + '/picture';
+        }
 
-	var base = 'https://graph.facebook.com/';
+        return o;
+    }
 
-	function formatUser(o) {
-		if (o.id) {
-			o.thumbnail = o.picture = 'https://graph.facebook.com/' + o.id + '/picture';
-		}
+    function formatFriends(o) {
+        if ('data' in o) {
+            o.data.forEach(formatUser);
+        }
 
-		return o;
-	}
+        return o;
+    }
 
-	function formatFriends(o) {
-		if ('data' in o) {
-			o.data.forEach(formatUser);
-		}
+    function format(o, headers, req) {
+        if (typeof o === 'boolean') {
+            o = { success: o };
+        }
 
-		return o;
-	}
+        if (o && 'data' in o) {
+            var token = req.query.access_token;
 
-	function format(o, headers, req) {
-		if (typeof o === 'boolean') {
-			o = {success: o};
-		}
+            if (!(o.data instanceof Array)) {
+                var data = o.data;
+                delete o.data;
+                o.data = [data];
+            }
 
-		if (o && 'data' in o) {
-			var token = req.query.access_token;
+            o.data.forEach(function(d) {
 
-			if (!(o.data instanceof Array)) {
-				var data = o.data;
-				delete o.data;
-				o.data = [data];
-			}
+                if (d.picture) {
+                    d.thumbnail = d.picture;
+                }
 
-			o.data.forEach(function(d) {
+                d.pictures = (d.images || [])
+                    .sort(function(a, b) {
+                        return a.width - b.width;
+                    });
 
-				if (d.picture) {
-					d.thumbnail = d.picture;
-				}
+                if (d.cover_photo && d.cover_photo.id) {
+                    d.thumbnail = base + d.cover_photo.id + '/picture?access_token=' + token;
+                }
 
-				d.pictures = (d.images || [])
-					.sort(function(a, b) {
-						return a.width - b.width;
-					});
+                if (d.type === 'album') {
+                    d.files = d.photos = base + d.id + '/photos';
+                }
 
-				if (d.cover_photo && d.cover_photo.id) {
-					d.thumbnail = base + d.cover_photo.id + '/picture?access_token=' + token;
-				}
+                if (d.can_upload) {
+                    d.upload_location = base + d.id + '/photos';
+                }
+            });
+        }
 
-				if (d.type === 'album') {
-					d.files = d.photos = base + d.id + '/photos';
-				}
-
-				if (d.can_upload) {
-					d.upload_location = base + d.id + '/photos';
-				}
-			});
-		}
-
-		return o;
-	}
+        return o;
+    }
 
 })(hello);
 
@@ -3920,773 +3931,775 @@ if (typeof chrome === 'object' && typeof chrome.identity === 'object' && chrome.
 
 (function(hello) {
 
-	var contactsUrl = 'https://www.google.com/m8/feeds/contacts/default/full?v=3.0&alt=json&max-results=@{limit|1000}&start-index=@{start|1}';
-
-	hello.init({
-
-		google: {
-
-			name: 'Google Plus',
-
-			// See: http://code.google.com/apis/accounts/docs/OAuth2UserAgent.html
-			oauth: {
-				version: 2,
-				auth: 'https://accounts.google.com/o/oauth2/auth',
-				grant: 'https://accounts.google.com/o/oauth2/token'
-			},
-
-			// Authorization scopes
-			scope: {
-				basic: 'https://www.googleapis.com/auth/plus.me profile',
-				email: 'email',
-				birthday: '',
-				events: '',
-				photos: 'https://picasaweb.google.com/data/',
-				videos: 'http://gdata.youtube.com',
-				friends: 'https://www.google.com/m8/feeds, https://www.googleapis.com/auth/plus.login',
-				files: 'https://www.googleapis.com/auth/drive.readonly',
-				publish: '',
-				publish_files: 'https://www.googleapis.com/auth/drive',
-				share: '',
-				create_event: '',
-				offline_access: ''
-			},
-
-			scope_delim: ' ',
-
-			login: function(p) {
-
-				if (p.qs.response_type === 'code') {
-
-					// Let's set this to an offline access to return a refresh_token
-					p.qs.access_type = 'offline';
-				}
-
-				// Reauthenticate
-				// https://developers.google.com/identity/protocols/
-				if (p.options.force) {
-					p.qs.approval_prompt = 'force';
-				}
-			},
-
-			// API base URI
-			base: 'https://www.googleapis.com/',
-
-			// Map GET requests
-			get: {
-				me: 'plus/v1/people/me',
-
-				// Deprecated Sept 1, 2014
-				//'me': 'oauth2/v1/userinfo?alt=json',
-
-				// See: https://developers.google.com/+/api/latest/people/list
-				'me/friends': 'plus/v1/people/me/people/visible?maxResults=@{limit|100}',
-				'me/following': contactsUrl,
-				'me/followers': contactsUrl,
-				'me/contacts': contactsUrl,
-				'me/share': 'plus/v1/people/me/activities/public?maxResults=@{limit|100}',
-				'me/feed': 'plus/v1/people/me/activities/public?maxResults=@{limit|100}',
-				'me/albums': 'https://picasaweb.google.com/data/feed/api/user/default?alt=json&max-results=@{limit|100}&start-index=@{start|1}',
-				'me/album': function(p, callback) {
-					var key = p.query.id;
-					delete p.query.id;
-					callback(key.replace('/entry/', '/feed/'));
-				},
-
-				'me/photos': 'https://picasaweb.google.com/data/feed/api/user/default?alt=json&kind=photo&max-results=@{limit|100}&start-index=@{start|1}',
-
-				// See: https://developers.google.com/drive/v2/reference/files/list
-				'me/file': 'drive/v2/files/@{id}',
-				'me/files': 'drive/v2/files?q=%22@{parent|root}%22+in+parents+and+trashed=false&maxResults=@{limit|100}',
-
-				// See: https://developers.google.com/drive/v2/reference/files/list
-				'me/folders': 'drive/v2/files?q=%22@{id|root}%22+in+parents+and+mimeType+=+%22application/vnd.google-apps.folder%22+and+trashed=false&maxResults=@{limit|100}',
-
-				// See: https://developers.google.com/drive/v2/reference/files/list
-				'me/folder': 'drive/v2/files?q=%22@{id|root}%22+in+parents+and+trashed=false&maxResults=@{limit|100}'
-			},
-
-			// Map POST requests
-			post: {
-
-				// Google Drive
-				'me/files': uploadDrive,
-				'me/folders': function(p, callback) {
-					p.data = {
-						title: p.data.name,
-						parents: [{id: p.data.parent || 'root'}],
-						mimeType: 'application/vnd.google-apps.folder'
-					};
-					callback('drive/v2/files');
-				}
-			},
-
-			// Map PUT requests
-			put: {
-				'me/files': uploadDrive
-			},
-
-			// Map DELETE requests
-			del: {
-				'me/files': 'drive/v2/files/@{id}',
-				'me/folder': 'drive/v2/files/@{id}'
-			},
-
-			// Map PATCH requests
-			patch: {
-				'me/file': 'drive/v2/files/@{id}'
-			},
-
-			wrap: {
-				me: function(o) {
-					if (o.id) {
-						o.last_name = o.family_name || (o.name ? o.name.familyName : null);
-						o.first_name = o.given_name || (o.name ? o.name.givenName : null);
-
-						if (o.emails && o.emails.length) {
-							o.email = o.emails[0].value;
-						}
-
-						formatPerson(o);
-					}
-
-					return o;
-				},
-
-				'me/friends': function(o) {
-					if (o.items) {
-						paging(o);
-						o.data = o.items;
-						o.data.forEach(formatPerson);
-						delete o.items;
-					}
-
-					return o;
-				},
-
-				'me/contacts': formatFriends,
-				'me/followers': formatFriends,
-				'me/following': formatFriends,
-				'me/share': formatFeed,
-				'me/feed': formatFeed,
-				'me/albums': gEntry,
-				'me/photos': formatPhotos,
-				'default': gEntry
-			},
-
-			xhr: function(p) {
-
-				if (p.method === 'post' || p.method === 'put') {
-					toJSON(p);
-				}
-				else if (p.method === 'patch') {
-					hello.utils.extend(p.query, p.data);
-					p.data = null;
-				}
-
-				return true;
-			},
-
-			// Don't even try submitting via form.
-			// This means no POST operations in <=IE9
-			form: false
-		}
-	});
-
-	function toInt(s) {
-		return parseInt(s, 10);
-	}
-
-	function formatFeed(o) {
-		paging(o);
-		o.data = o.items;
-		delete o.items;
-		return o;
-	}
-
-	// Format: ensure each record contains a name, id etc.
-	function formatItem(o) {
-		if (o.error) {
-			return;
-		}
-
-		if (!o.name) {
-			o.name = o.title || o.message;
-		}
-
-		if (!o.picture) {
-			o.picture = o.thumbnailLink;
-		}
-
-		if (!o.thumbnail) {
-			o.thumbnail = o.thumbnailLink;
-		}
-
-		if (o.mimeType === 'application/vnd.google-apps.folder') {
-			o.type = 'folder';
-			o.files = 'https://www.googleapis.com/drive/v2/files?q=%22' + o.id + '%22+in+parents';
-		}
-
-		return o;
-	}
-
-	function formatImage(image) {
-		return {
-			source: image.url,
-			width: image.width,
-			height: image.height
-		};
-	}
-
-	function formatPhotos(o) {
-		o.data = o.feed.entry.map(formatEntry);
-		delete o.feed;
-	}
-
-	// Google has a horrible JSON API
-	function gEntry(o) {
-		paging(o);
-
-		if ('feed' in o && 'entry' in o.feed) {
-			o.data = o.feed.entry.map(formatEntry);
-			delete o.feed;
-		}
-
-		// Old style: Picasa, etc.
-		else if ('entry' in o) {
-			return formatEntry(o.entry);
-		}
-
-		// New style: Google Drive & Plus
-		else if ('items' in o) {
-			o.data = o.items.map(formatItem);
-			delete o.items;
-		}
-		else {
-			formatItem(o);
-		}
-
-		return o;
-	}
-
-	function formatPerson(o) {
-		o.name = o.displayName || o.name;
-		o.picture = o.picture || (o.image ? o.image.url : null);
-		o.thumbnail = o.picture;
-	}
-
-	function formatFriends(o, headers, req) {
-		paging(o);
-		var r = [];
-		if ('feed' in o && 'entry' in o.feed) {
-			var token = req.query.access_token;
-			for (var i = 0; i < o.feed.entry.length; i++) {
-				var a = o.feed.entry[i];
-
-				a.id	= a.id.$t;
-				a.name	= a.title.$t;
-				delete a.title;
-				if (a.gd$email) {
-					a.email	= (a.gd$email && a.gd$email.length > 0) ? a.gd$email[0].address : null;
-					a.emails = a.gd$email;
-					delete a.gd$email;
-				}
-
-				if (a.updated) {
-					a.updated = a.updated.$t;
-				}
-
-				if (a.link) {
-
-					var pic = (a.link.length > 0) ? a.link[0].href : null;
-					if (pic && a.link[0].gd$etag) {
-						pic += (pic.indexOf('?') > -1 ? '&' : '?') + 'access_token=' + token;
-						a.picture = pic;
-						a.thumbnail = pic;
-					}
-
-					delete a.link;
-				}
-
-				if (a.category) {
-					delete a.category;
-				}
-			}
-
-			o.data = o.feed.entry;
-			delete o.feed;
-		}
-
-		return o;
-	}
-
-	function formatEntry(a) {
-
-		var group = a.media$group;
-		var photo = group.media$content.length ? group.media$content[0] : {};
-		var mediaContent = group.media$content || [];
-		var mediaThumbnail = group.media$thumbnail || [];
-
-		var pictures = mediaContent
-			.concat(mediaThumbnail)
-			.map(formatImage)
-			.sort(function(a, b) {
-				return a.width - b.width;
-			});
-
-		var i = 0;
-		var _a;
-		var p = {
-			id: a.id.$t,
-			name: a.title.$t,
-			description: a.summary.$t,
-			updated_time: a.updated.$t,
-			created_time: a.published.$t,
-			picture: photo ? photo.url : null,
-			pictures: pictures,
-			images: [],
-			thumbnail: photo ? photo.url : null,
-			width: photo.width,
-			height: photo.height
-		};
-
-		// Get feed/children
-		if ('link' in a) {
-			for (i = 0; i < a.link.length; i++) {
-				var d = a.link[i];
-				if (d.rel.match(/\#feed$/)) {
-					p.upload_location = p.files = p.photos = d.href;
-					break;
-				}
-			}
-		}
-
-		// Get images of different scales
-		if ('category' in a && a.category.length) {
-			_a = a.category;
-			for (i = 0; i < _a.length; i++) {
-				if (_a[i].scheme && _a[i].scheme.match(/\#kind$/)) {
-					p.type = _a[i].term.replace(/^.*?\#/, '');
-				}
-			}
-		}
-
-		// Get images of different scales
-		if ('media$thumbnail' in group && group.media$thumbnail.length) {
-			_a = group.media$thumbnail;
-			p.thumbnail = _a[0].url;
-			p.images = _a.map(formatImage);
-		}
-
-		_a = group.media$content;
-
-		if (_a && _a.length) {
-			p.images.push(formatImage(_a[0]));
-		}
-
-		return p;
-	}
-
-	function paging(res) {
-
-		// Contacts V2
-		if ('feed' in res && res.feed.openSearch$itemsPerPage) {
-			var limit = toInt(res.feed.openSearch$itemsPerPage.$t);
-			var start = toInt(res.feed.openSearch$startIndex.$t);
-			var total = toInt(res.feed.openSearch$totalResults.$t);
-
-			if ((start + limit) < total) {
-				res.paging = {
-					next: '?start=' + (start + limit)
-				};
-			}
-		}
-		else if ('nextPageToken' in res) {
-			res.paging = {
-				next: '?pageToken=' + res.nextPageToken
-			};
-		}
-	}
-
-	// Construct a multipart message
-	function Multipart() {
-
-		// Internal body
-		var body = [];
-		var boundary = (Math.random() * 1e10).toString(32);
-		var counter = 0;
-		var lineBreak = '\r\n';
-		var delim = lineBreak + '--' + boundary;
-		var ready = function() {};
-
-		var dataUri = /^data\:([^;,]+(\;charset=[^;,]+)?)(\;base64)?,/i;
-
-		// Add file
-		function addFile(item) {
-			var fr = new FileReader();
-			fr.onload = function(e) {
-				addContent(btoa(e.target.result), item.type + lineBreak + 'Content-Transfer-Encoding: base64');
-			};
-
-			fr.readAsBinaryString(item);
-		}
-
-		// Add content
-		function addContent(content, type) {
-			body.push(lineBreak + 'Content-Type: ' + type + lineBreak + lineBreak + content);
-			counter--;
-			ready();
-		}
-
-		// Add new things to the object
-		this.append = function(content, type) {
-
-			// Does the content have an array
-			if (typeof (content) === 'string' || !('length' in Object(content))) {
-				// Converti to multiples
-				content = [content];
-			}
-
-			for (var i = 0; i < content.length; i++) {
-
-				counter++;
-
-				var item = content[i];
-
-				// Is this a file?
-				// Files can be either Blobs or File types
-				if (
-					(typeof (File) !== 'undefined' && item instanceof File) ||
-					(typeof (Blob) !== 'undefined' && item instanceof Blob)
-				) {
-					// Read the file in
-					addFile(item);
-				}
-
-				// Data-URI?
-				// Data:[<mime type>][;charset=<charset>][;base64],<encoded data>
-				// /^data\:([^;,]+(\;charset=[^;,]+)?)(\;base64)?,/i
-				else if (typeof (item) === 'string' && item.match(dataUri)) {
-					var m = item.match(dataUri);
-					addContent(item.replace(dataUri, ''), m[1] + lineBreak + 'Content-Transfer-Encoding: base64');
-				}
-
-				// Regular string
-				else {
-					addContent(item, type);
-				}
-			}
-		};
-
-		this.onready = function(fn) {
-			ready = function() {
-				if (counter === 0) {
-					// Trigger ready
-					body.unshift('');
-					body.push('--');
-					fn(body.join(delim), boundary);
-					body = [];
-				}
-			};
-
-			ready();
-		};
-	}
-
-	// Upload to Drive
-	// If this is PUT then only augment the file uploaded
-	// PUT https://developers.google.com/drive/v2/reference/files/update
-	// POST https://developers.google.com/drive/manage-uploads
-	function uploadDrive(p, callback) {
-
-		var data = {};
-
-		// Test for DOM element
-		if (p.data &&
-			(typeof (HTMLInputElement) !== 'undefined' && p.data instanceof HTMLInputElement)
-		) {
-			p.data = {file: p.data};
-		}
-
-		if (!p.data.name && Object(Object(p.data.file).files).length && p.method === 'post') {
-			p.data.name = p.data.file.files[0].name;
-		}
-
-		if (p.method === 'post') {
-			p.data = {
-				title: p.data.name,
-				parents: [{id: p.data.parent || 'root'}],
-				file: p.data.file
-			};
-		}
-		else {
-
-			// Make a reference
-			data = p.data;
-			p.data = {};
-
-			// Add the parts to change as required
-			if (data.parent) {
-				p.data.parents = [{id: p.data.parent || 'root'}];
-			}
-
-			if (data.file) {
-				p.data.file = data.file;
-			}
-
-			if (data.name) {
-				p.data.title = data.name;
-			}
-		}
-
-		// Extract the file, if it exists from the data object
-		// If the File is an INPUT element lets just concern ourselves with the NodeList
-		var file;
-		if ('file' in p.data) {
-			file = p.data.file;
-			delete p.data.file;
-
-			if (typeof (file) === 'object' && 'files' in file) {
-				// Assign the NodeList
-				file = file.files;
-			}
-
-			if (!file || !file.length) {
-				callback({
-					error: {
-						code: 'request_invalid',
-						message: 'There were no files attached with this request to upload'
-					}
-				});
-				return;
-			}
-		}
-
-		// Set type p.data.mimeType = Object(file[0]).type || 'application/octet-stream';
-
-		// Construct a multipart message
-		var parts = new Multipart();
-		parts.append(JSON.stringify(p.data), 'application/json');
-
-		// Read the file into a  base64 string... yep a hassle, i know
-		// FormData doesn't let us assign our own Multipart headers and HTTP Content-Type
-		// Alas GoogleApi need these in a particular format
-		if (file) {
-			parts.append(file);
-		}
-
-		parts.onready(function(body, boundary) {
-
-			p.headers['content-type'] = 'multipart/related; boundary="' + boundary + '"';
-			p.data = body;
-
-			callback('upload/drive/v2/files' + (data.id ? '/' + data.id : '') + '?uploadType=multipart');
-		});
-
-	}
-
-	function toJSON(p) {
-		if (typeof (p.data) === 'object') {
-			// Convert the POST into a javascript object
-			try {
-				p.data = JSON.stringify(p.data);
-				p.headers['content-type'] = 'application/json';
-			}
-			catch (e) {}
-		}
-	}
+    var contactsUrl = 'https://www.google.com/m8/feeds/contacts/default/full?v=3.0&alt=json&max-results=@{limit|1000}&start-index=@{start|1}';
+
+    hello.init({
+
+        google: {
+
+            name: 'Google Plus',
+
+            // See: http://code.google.com/apis/accounts/docs/OAuth2UserAgent.html
+            oauth: {
+                version: 2,
+                auth: 'https://accounts.google.com/o/oauth2/auth',
+                grant: 'https://accounts.google.com/o/oauth2/token'
+            },
+
+            // Authorization scopes
+            scope: {
+                basic: 'https://www.googleapis.com/auth/plus.me profile',
+                email: 'email',
+                birthday: '',
+                events: '',
+                photos: 'https://picasaweb.google.com/data/',
+                videos: 'http://gdata.youtube.com',
+                friends: 'https://www.google.com/m8/feeds, https://www.googleapis.com/auth/plus.login',
+                files: 'https://www.googleapis.com/auth/drive.readonly',
+                publish: '',
+                publish_files: 'https://www.googleapis.com/auth/drive',
+                share: '',
+                create_event: '',
+                offline_access: ''
+            },
+
+            scope_delim: ' ',
+
+            login: function(p) {
+
+                if (p.qs.response_type === 'code') {
+
+                    // Let's set this to an offline access to return a refresh_token
+                    p.qs.access_type = 'offline';
+                }
+
+                // Reauthenticate
+                // https://developers.google.com/identity/protocols/
+                if (p.options.force) {
+                    p.qs.approval_prompt = 'force';
+                }
+            },
+
+            // API base URI
+            base: 'https://www.googleapis.com/',
+
+            // Map GET requests
+            get: {
+                me: 'plus/v1/people/me',
+
+                // Deprecated Sept 1, 2014
+                //'me': 'oauth2/v1/userinfo?alt=json',
+
+                // See: https://developers.google.com/+/api/latest/people/list
+                'me/friends': 'plus/v1/people/me/people/visible?maxResults=@{limit|100}',
+                'me/following': contactsUrl,
+                'me/followers': contactsUrl,
+                'me/contacts': contactsUrl,
+                'me/share': 'plus/v1/people/me/activities/public?maxResults=@{limit|100}',
+                'me/feed': 'plus/v1/people/me/activities/public?maxResults=@{limit|100}',
+                'me/albums': 'https://picasaweb.google.com/data/feed/api/user/default?alt=json&max-results=@{limit|100}&start-index=@{start|1}',
+                'me/album': function(p, callback) {
+                    var key = p.query.id;
+                    delete p.query.id;
+                    callback(key.replace('/entry/', '/feed/'));
+                },
+
+                'me/photos': 'https://picasaweb.google.com/data/feed/api/user/default?alt=json&kind=photo&max-results=@{limit|100}&start-index=@{start|1}',
+
+                // See: https://developers.google.com/drive/v2/reference/files/list
+                'me/file': 'drive/v2/files/@{id}',
+                'me/files': 'drive/v2/files?q=%22@{parent|root}%22+in+parents+and+trashed=false&maxResults=@{limit|100}',
+
+                // See: https://developers.google.com/drive/v2/reference/files/list
+                'me/folders': 'drive/v2/files?q=%22@{id|root}%22+in+parents+and+mimeType+=+%22application/vnd.google-apps.folder%22+and+trashed=false&maxResults=@{limit|100}',
+
+                // See: https://developers.google.com/drive/v2/reference/files/list
+                'me/folder': 'drive/v2/files?q=%22@{id|root}%22+in+parents+and+trashed=false&maxResults=@{limit|100}'
+            },
+
+            // Map POST requests
+            post: {
+
+                // Google Drive
+                'me/files': uploadDrive,
+                'me/folders': function(p, callback) {
+                    p.data = {
+                        title: p.data.name,
+                        parents: [{ id: p.data.parent || 'root' }],
+                        mimeType: 'application/vnd.google-apps.folder'
+                    };
+                    callback('drive/v2/files');
+                }
+            },
+
+            // Map PUT requests
+            put: {
+                'me/files': uploadDrive
+            },
+
+            // Map DELETE requests
+            del: {
+                'me/files': 'drive/v2/files/@{id}',
+                'me/folder': 'drive/v2/files/@{id}'
+            },
+
+            // Map PATCH requests
+            patch: {
+                'me/file': 'drive/v2/files/@{id}'
+            },
+
+            wrap: {
+                me: function(o) {
+                    if (o.id) {
+                        o.last_name = o.family_name || (o.name ? o.name.familyName : null);
+                        o.first_name = o.given_name || (o.name ? o.name.givenName : null);
+
+                        if (o.emails && o.emails.length) {
+                            o.email = o.emails[0].value;
+                        }
+
+                        formatPerson(o);
+                    }
+
+                    return o;
+                },
+
+                'me/friends': function(o) {
+                    if (o.items) {
+                        paging(o);
+                        o.data = o.items;
+                        o.data.forEach(formatPerson);
+                        delete o.items;
+                    }
+
+                    return o;
+                },
+
+                'me/contacts': formatFriends,
+                'me/followers': formatFriends,
+                'me/following': formatFriends,
+                'me/share': formatFeed,
+                'me/feed': formatFeed,
+                'me/albums': gEntry,
+                'me/photos': formatPhotos,
+                'default': gEntry
+            },
+
+            xhr: function(p) {
+
+                if (p.method === 'post' || p.method === 'put') {
+                    toJSON(p);
+                } else if (p.method === 'patch') {
+                    hello.utils.extend(p.query, p.data);
+                    p.data = null;
+                }
+
+                return true;
+            },
+
+            // Don't even try submitting via form.
+            // This means no POST operations in <=IE9
+            form: false
+        }
+    });
+
+    function toInt(s) {
+        return parseInt(s, 10);
+    }
+
+    function formatFeed(o) {
+        paging(o);
+        o.data = o.items;
+        delete o.items;
+        return o;
+    }
+
+    // Format: ensure each record contains a name, id etc.
+    function formatItem(o) {
+        if (o.error) {
+            return;
+        }
+
+        if (!o.name) {
+            o.name = o.title || o.message;
+        }
+
+        if (!o.picture) {
+            o.picture = o.thumbnailLink;
+        }
+
+        if (!o.thumbnail) {
+            o.thumbnail = o.thumbnailLink;
+        }
+
+        if (o.mimeType === 'application/vnd.google-apps.folder') {
+            o.type = 'folder';
+            o.files = 'https://www.googleapis.com/drive/v2/files?q=%22' + o.id + '%22+in+parents';
+        }
+
+        return o;
+    }
+
+    function formatImage(image) {
+        return {
+            source: image.url,
+            width: image.width,
+            height: image.height
+        };
+    }
+
+    function formatPhotos(o) {
+        o.data = o.feed.entry.map(formatEntry);
+        delete o.feed;
+    }
+
+    // Google has a horrible JSON API
+    function gEntry(o) {
+        paging(o);
+
+        if ('feed' in o && 'entry' in o.feed) {
+            o.data = o.feed.entry.map(formatEntry);
+            delete o.feed;
+        }
+
+        // Old style: Picasa, etc.
+        else if ('entry' in o) {
+            return formatEntry(o.entry);
+        }
+
+        // New style: Google Drive & Plus
+        else if ('items' in o) {
+            o.data = o.items.map(formatItem);
+            delete o.items;
+        } else {
+            formatItem(o);
+        }
+
+        return o;
+    }
+
+    function formatPerson(o) {
+        o.name = o.displayName || o.name;
+        o.picture = o.picture || (o.image ? o.image.url : null);
+        o.thumbnail = o.picture;
+    }
+
+    function formatFriends(o, headers, req) {
+        paging(o);
+        var r = [];
+        if ('feed' in o && 'entry' in o.feed) {
+            var token = req.query.access_token;
+            for (var i = 0; i < o.feed.entry.length; i++) {
+                var a = o.feed.entry[i];
+
+                a.id = a.id.$t;
+                a.name = a.title.$t;
+                delete a.title;
+                if (a.gd$email) {
+                    a.email = (a.gd$email && a.gd$email.length > 0) ? a.gd$email[0].address : null;
+                    a.emails = a.gd$email;
+                    delete a.gd$email;
+                }
+
+                if (a.updated) {
+                    a.updated = a.updated.$t;
+                }
+
+                if (a.link) {
+
+                    var pic = (a.link.length > 0) ? a.link[0].href : null;
+                    if (pic && a.link[0].gd$etag) {
+                        pic += (pic.indexOf('?') > -1 ? '&' : '?') + 'access_token=' + token;
+                        a.picture = pic;
+                        a.thumbnail = pic;
+                    }
+
+                    delete a.link;
+                }
+
+                if (a.category) {
+                    delete a.category;
+                }
+            }
+
+            o.data = o.feed.entry;
+            delete o.feed;
+        }
+
+        return o;
+    }
+
+    function formatEntry(a) {
+
+        var group = a.media$group;
+        var photo = group.media$content.length ? group.media$content[0] : {};
+        var mediaContent = group.media$content || [];
+        var mediaThumbnail = group.media$thumbnail || [];
+
+        var pictures = mediaContent
+            .concat(mediaThumbnail)
+            .map(formatImage)
+            .sort(function(a, b) {
+                return a.width - b.width;
+            });
+
+        var i = 0;
+        var _a;
+        var p = {
+            id: a.id.$t,
+            name: a.title.$t,
+            description: a.summary.$t,
+            updated_time: a.updated.$t,
+            created_time: a.published.$t,
+            picture: photo ? photo.url : null,
+            pictures: pictures,
+            images: [],
+            thumbnail: photo ? photo.url : null,
+            width: photo.width,
+            height: photo.height
+        };
+
+        // Get feed/children
+        if ('link' in a) {
+            for (i = 0; i < a.link.length; i++) {
+                var d = a.link[i];
+                if (d.rel.match(/\#feed$/)) {
+                    p.upload_location = p.files = p.photos = d.href;
+                    break;
+                }
+            }
+        }
+
+        // Get images of different scales
+        if ('category' in a && a.category.length) {
+            _a = a.category;
+            for (i = 0; i < _a.length; i++) {
+                if (_a[i].scheme && _a[i].scheme.match(/\#kind$/)) {
+                    p.type = _a[i].term.replace(/^.*?\#/, '');
+                }
+            }
+        }
+
+        // Get images of different scales
+        if ('media$thumbnail' in group && group.media$thumbnail.length) {
+            _a = group.media$thumbnail;
+            p.thumbnail = _a[0].url;
+            p.images = _a.map(formatImage);
+        }
+
+        _a = group.media$content;
+
+        if (_a && _a.length) {
+            p.images.push(formatImage(_a[0]));
+        }
+
+        return p;
+    }
+
+    function paging(res) {
+
+        // Contacts V2
+        if ('feed' in res && res.feed.openSearch$itemsPerPage) {
+            var limit = toInt(res.feed.openSearch$itemsPerPage.$t);
+            var start = toInt(res.feed.openSearch$startIndex.$t);
+            var total = toInt(res.feed.openSearch$totalResults.$t);
+
+            if ((start + limit) < total) {
+                res.paging = {
+                    next: '?start=' + (start + limit)
+                };
+            }
+        } else if ('nextPageToken' in res) {
+            res.paging = {
+                next: '?pageToken=' + res.nextPageToken
+            };
+        }
+    }
+
+    // Construct a multipart message
+    function Multipart() {
+
+        // Internal body
+        var body = [];
+        var boundary = (Math.random() * 1e10).toString(32);
+        var counter = 0;
+        var lineBreak = '\r\n';
+        var delim = lineBreak + '--' + boundary;
+        var ready = function() {};
+
+        var dataUri = /^data\:([^;,]+(\;charset=[^;,]+)?)(\;base64)?,/i;
+
+        // Add file
+        function addFile(item) {
+            var fr = new FileReader();
+            fr.onload = function(e) {
+                addContent(btoa(e.target.result), item.type + lineBreak + 'Content-Transfer-Encoding: base64');
+            };
+
+            fr.readAsBinaryString(item);
+        }
+
+        // Add content
+        function addContent(content, type) {
+            body.push(lineBreak + 'Content-Type: ' + type + lineBreak + lineBreak + content);
+            counter--;
+            ready();
+        }
+
+        // Add new things to the object
+        this.append = function(content, type) {
+
+            // Does the content have an array
+            if (typeof(content) === 'string' || !('length' in Object(content))) {
+                // Converti to multiples
+                content = [content];
+            }
+
+            for (var i = 0; i < content.length; i++) {
+
+                counter++;
+
+                var item = content[i];
+
+                // Is this a file?
+                // Files can be either Blobs or File types
+                if (
+                    (typeof(File) !== 'undefined' && item instanceof File) ||
+                    (typeof(Blob) !== 'undefined' && item instanceof Blob)
+                ) {
+                    // Read the file in
+                    addFile(item);
+                }
+
+                // Data-URI?
+                // Data:[<mime type>][;charset=<charset>][;base64],<encoded data>
+                // /^data\:([^;,]+(\;charset=[^;,]+)?)(\;base64)?,/i
+                else if (typeof(item) === 'string' && item.match(dataUri)) {
+                    var m = item.match(dataUri);
+                    addContent(item.replace(dataUri, ''), m[1] + lineBreak + 'Content-Transfer-Encoding: base64');
+                }
+
+                // Regular string
+                else {
+                    addContent(item, type);
+                }
+            }
+        };
+
+        this.onready = function(fn) {
+            ready = function() {
+                if (counter === 0) {
+                    // Trigger ready
+                    body.unshift('');
+                    body.push('--');
+                    fn(body.join(delim), boundary);
+                    body = [];
+                }
+            };
+
+            ready();
+        };
+    }
+
+    // Upload to Drive
+    // If this is PUT then only augment the file uploaded
+    // PUT https://developers.google.com/drive/v2/reference/files/update
+    // POST https://developers.google.com/drive/manage-uploads
+    function uploadDrive(p, callback) {
+
+        var data = {};
+
+        // Test for DOM element
+        if (p.data &&
+            (typeof(HTMLInputElement) !== 'undefined' && p.data instanceof HTMLInputElement)
+        ) {
+            p.data = { file: p.data };
+        }
+
+        if (!p.data.name && Object(Object(p.data.file).files).length && p.method === 'post') {
+            p.data.name = p.data.file.files[0].name;
+        }
+
+        if (p.method === 'post') {
+            p.data = {
+                title: p.data.name,
+                parents: [{ id: p.data.parent || 'root' }],
+                file: p.data.file
+            };
+        } else {
+
+            // Make a reference
+            data = p.data;
+            p.data = {};
+
+            // Add the parts to change as required
+            if (data.parent) {
+                p.data.parents = [{ id: p.data.parent || 'root' }];
+            }
+
+            if (data.file) {
+                p.data.file = data.file;
+            }
+
+            if (data.name) {
+                p.data.title = data.name;
+            }
+        }
+
+        // Extract the file, if it exists from the data object
+        // If the File is an INPUT element lets just concern ourselves with the NodeList
+        var file;
+        if ('file' in p.data) {
+            file = p.data.file;
+            delete p.data.file;
+
+            if (typeof(file) === 'object' && 'files' in file) {
+                // Assign the NodeList
+                file = file.files;
+            }
+
+            if (!file || !file.length) {
+                callback({
+                    error: {
+                        code: 'request_invalid',
+                        message: 'There were no files attached with this request to upload'
+                    }
+                });
+                return;
+            }
+        }
+
+        // Set type p.data.mimeType = Object(file[0]).type || 'application/octet-stream';
+
+        // Construct a multipart message
+        var parts = new Multipart();
+        parts.append(JSON.stringify(p.data), 'application/json');
+
+        // Read the file into a  base64 string... yep a hassle, i know
+        // FormData doesn't let us assign our own Multipart headers and HTTP Content-Type
+        // Alas GoogleApi need these in a particular format
+        if (file) {
+            parts.append(file);
+        }
+
+        parts.onready(function(body, boundary) {
+
+            p.headers['content-type'] = 'multipart/related; boundary="' + boundary + '"';
+            p.data = body;
+
+            callback('upload/drive/v2/files' + (data.id ? '/' + data.id : '') + '?uploadType=multipart');
+        });
+
+    }
+
+    function toJSON(p) {
+        if (typeof(p.data) === 'object') {
+            // Convert the POST into a javascript object
+            try {
+                p.data = JSON.stringify(p.data);
+                p.headers['content-type'] = 'application/json';
+            } catch (e) {}
+        }
+    }
 
 })(hello);
 
 (function(hello) {
 
-	hello.init({
+    hello.init({
 
-		instagram: {
+        instagram: {
 
-			name: 'Instagram',
+            name: 'Instagram',
 
-			oauth: {
-				// See: http://instagram.com/developer/authentication/
-				version: 2,
-				auth: 'https://instagram.com/oauth/authorize/',
-				grant: 'https://api.instagram.com/oauth/access_token'
-			},
+            oauth: {
+                // See: http://instagram.com/developer/authentication/
+                version: 2,
+                auth: 'https://instagram.com/oauth/authorize/',
+                grant: 'https://api.instagram.com/oauth/access_token'
+            },
 
-			// Refresh the access_token once expired
-			refresh: true,
+            // Refresh the access_token once expired
+            refresh: true,
 
-			scope: {
-				basic: 'basic',
-				photos: '',
-				friends: 'relationships',
-				publish: 'likes comments',
-				email: '',
-				share: '',
-				publish_files: '',
-				files: '',
-				videos: '',
-				offline_access: ''
-			},
+            scope: {
+                basic: 'basic',
+                photos: '',
+                friends: 'relationships',
+                publish: 'likes comments',
+                email: '',
+                share: '',
+                publish_files: '',
+                files: '',
+                videos: '',
+                offline_access: ''
+            },
 
-			scope_delim: ' ',
+            scope_delim: ' ',
 
-			base: 'https://api.instagram.com/v1/',
+            base: 'https://api.instagram.com/v1/',
 
-			get: {
-				me: 'users/self',
-				'me/feed': 'users/self/feed?count=@{limit|100}',
-				'me/photos': 'users/self/media/recent?min_id=0&count=@{limit|100}',
-				'me/friends': 'users/self/follows?count=@{limit|100}',
-				'me/following': 'users/self/follows?count=@{limit|100}',
-				'me/followers': 'users/self/followed-by?count=@{limit|100}',
-				'friend/photos': 'users/@{id}/media/recent?min_id=0&count=@{limit|100}'
-			},
+            get: {
+                me: 'users/self',
+                'me/feed': 'users/self/feed?count=@{limit|100}',
+                'me/photos': 'users/self/media/recent?min_id=0&count=@{limit|100}',
+                'me/friends': 'users/self/follows?count=@{limit|100}',
+                'me/following': 'users/self/follows?count=@{limit|100}',
+                'me/followers': 'users/self/followed-by?count=@{limit|100}',
+                'friend/photos': 'users/@{id}/media/recent?min_id=0&count=@{limit|100}',
+                list: ''
+            },
 
-			post: {
-				'me/like': function(p, callback) {
-					var id = p.data.id;
-					p.data = {};
-					callback('media/' + id + '/likes');
-				}
-			},
+            post: {
+                'me/like': function(p, callback) {
+                    var id = p.data.id;
+                    p.data = {};
+                    callback('media/' + id + '/likes');
+                }
+            },
 
-			del: {
-				'me/like': 'media/@{id}/likes'
-			},
+            del: {
+                'me/like': 'media/@{id}/likes'
+            },
 
-			wrap: {
-				me: function(o) {
+            wrap: {
+                me: function(o) {
 
-					formatError(o);
+                    formatError(o);
 
-					if ('data' in o) {
-						o.id = o.data.id;
-						o.thumbnail = o.data.profile_picture;
-						o.name = o.data.full_name || o.data.username;
-					}
+                    if ('data' in o) {
+                        o.id = o.data.id;
+                        o.thumbnail = o.data.profile_picture;
+                        o.name = o.data.full_name || o.data.username;
+                    }
 
-					return o;
-				},
+                    return o;
+                },
 
-				'me/friends': formatFriends,
-				'me/following': formatFriends,
-				'me/followers': formatFriends,
-				'me/photos': function(o) {
+                'me/friends': formatFriends,
+                'me/following': formatFriends,
+                'me/followers': formatFriends,
+                'me/photos': function(o) {
 
-					formatError(o);
-					paging(o);
+                    formatError(o);
+                    paging(o);
 
-					if ('data' in o) {
-						o.data = o.data.filter(function(d) {
-							return d.type === 'image';
-						});
+                    if ('data' in o) {
+                        o.data = o.data.filter(function(d) {
+                            return d.type === 'image';
+                        });
 
-						o.data.forEach(function(d) {
-							d.name = d.caption ? d.caption.text : null;
-							d.thumbnail = d.images.thumbnail.url;
-							d.picture = d.images.standard_resolution.url;
-							d.pictures = Object.keys(d.images)
-								.map(function(key) {
-									var image = d.images[key];
-									return formatImage(image);
-								})
-								.sort(function(a, b) {
-									return a.width - b.width;
-								});
-						});
-					}
+                        o.data.forEach(function(d) {
+                            d.name = d.caption ? d.caption.text : null;
+                            d.thumbnail = d.images.thumbnail.url;
+                            d.picture = d.images.standard_resolution.url;
+                            d.pictures = Object.keys(d.images)
+                                .map(function(key) {
+                                    var image = d.images[key];
+                                    return formatImage(image);
+                                })
+                                .sort(function(a, b) {
+                                    return a.width - b.width;
+                                });
+                        });
+                    }
 
-					return o;
-				},
+                    return o;
+                },
 
-				'default': function(o) {
-					o = formatError(o);
-					paging(o);
-					return o;
-				}
-			},
+                'list': function() {
+                    return {
+                        data: []
+                    };
+                },
 
-			// Instagram does not return any CORS Headers
-			// So besides JSONP we're stuck with proxy
-			xhr: function(p, qs) {
+                'default': function(o) {
+                    o = formatError(o);
+                    paging(o);
+                    return o;
+                }
+            },
 
-				var method = p.method;
-				var proxy = method !== 'get';
+            // Instagram does not return any CORS Headers
+            // So besides JSONP we're stuck with proxy
+            xhr: function(p, qs) {
 
-				if (proxy) {
+                var method = p.method;
+                var proxy = method !== 'get';
 
-					if ((method === 'post' || method === 'put') && p.query.access_token) {
-						p.data.access_token = p.query.access_token;
-						delete p.query.access_token;
-					}
+                if (proxy) {
 
-					// No access control headers
-					// Use the proxy instead
-					p.proxy = proxy;
-				}
+                    if ((method === 'post' || method === 'put') && p.query.access_token) {
+                        p.data.access_token = p.query.access_token;
+                        delete p.query.access_token;
+                    }
 
-				return proxy;
-			},
+                    // No access control headers
+                    // Use the proxy instead
+                    p.proxy = proxy;
+                }
 
-			// No form
-			form: false
-		}
-	});
+                return proxy;
+            },
 
-	function formatImage(image) {
-		return {
-			source: image.url,
-			width: image.width,
-			height: image.height
-		};
-	}
+            // No form
+            form: false
+        }
+    });
 
-	function formatError(o) {
-		if (typeof o === 'string') {
-			return {
-				error: {
-					code: 'invalid_request',
-					message: o
-				}
-			};
-		}
+    function formatImage(image) {
+        return {
+            source: image.url,
+            width: image.width,
+            height: image.height
+        };
+    }
 
-		if (o && 'meta' in o && 'error_type' in o.meta) {
-			o.error = {
-				code: o.meta.error_type,
-				message: o.meta.error_message
-			};
-		}
+    function formatError(o) {
+        if (typeof o === 'string') {
+            return {
+                error: {
+                    code: 'invalid_request',
+                    message: o
+                }
+            };
+        }
 
-		return o;
-	}
+        if (o && 'meta' in o && 'error_type' in o.meta) {
+            o.error = {
+                code: o.meta.error_type,
+                message: o.meta.error_message
+            };
+        }
 
-	function formatFriends(o) {
-		paging(o);
-		if (o && 'data' in o) {
-			o.data.forEach(formatFriend);
-		}
+        return o;
+    }
 
-		return o;
-	}
+    function formatFriends(o) {
+        paging(o);
+        if (o && 'data' in o) {
+            o.data.forEach(formatFriend);
+        }
 
-	function formatFriend(o) {
-		if (o.id) {
-			o.thumbnail = o.profile_picture;
-			o.name = o.full_name || o.username;
-		}
-	}
+        return o;
+    }
 
-	// See: http://instagram.com/developer/endpoints/
-	function paging(res) {
-		if ('pagination' in res) {
-			res.paging = {
-				next: res.pagination.next_url
-			};
-			delete res.pagination;
-		}
-	}
+    function formatFriend(o) {
+        if (o.id) {
+            o.thumbnail = o.profile_picture;
+            o.name = o.full_name || o.username;
+        }
+    }
+
+    // See: http://instagram.com/developer/endpoints/
+    function paging(res) {
+        if ('pagination' in res) {
+            res.paging = {
+                next: res.pagination.next_url
+            };
+            delete res.pagination;
+        }
+    }
 
 })(hello);
 
@@ -4858,203 +4871,220 @@ if (typeof chrome === 'object' && typeof chrome.identity === 'object' && chrome.
 
 (function(hello) {
 
-	hello.init({
+    hello.init({
 
-		linkedin: {
+        linkedin: {
 
-			oauth: {
-				version: 2,
-				response_type: 'code',
-				auth: 'https://www.linkedin.com/uas/oauth2/authorization',
-				grant: 'https://www.linkedin.com/uas/oauth2/accessToken'
-			},
+            oauth: {
+                version: 2,
+                response_type: 'code',
+                auth: 'https://www.linkedin.com/uas/oauth2/authorization',
+                grant: 'https://www.linkedin.com/uas/oauth2/accessToken'
+            },
 
-			// Refresh the access_token once expired
-			refresh: true,
+            // Refresh the access_token once expired
+            refresh: true,
 
-			scope: {
-				basic: 'r_basicprofile',
-				email: 'r_emailaddress',
-				files: '',
-				friends: '',
-				photos: '',
-				publish: 'w_share',
-				publish_files: 'w_share',
-				share: '',
-				videos: '',
-				offline_access: ''
-			},
-			scope_delim: ' ',
+            scope: {
+                basic: 'r_basicprofile',
+                email: 'r_emailaddress',
+                files: '',
+                friends: '',
+                photos: '',
+                publish: 'w_share',
+                publish_files: 'w_share',
+                share: '',
+                videos: '',
+                offline_access: ''
+            },
+            scope_delim: ' ',
 
-			base: 'https://api.linkedin.com/v1/',
+            base: 'https://api.linkedin.com/v1/',
 
-			get: {
-				me: 'people/~:(picture-url,first-name,last-name,id,formatted-name,email-address)',
+            get: {
+                me: 'people/~:(picture-url,first-name,last-name,id,formatted-name,email-address)',
 
-				// See: http://developer.linkedin.com/documents/get-network-updates-and-statistics-api
-				'me/share': 'people/~/network/updates?count=@{limit|250}'
-			},
+                // See: http://developer.linkedin.com/documents/get-network-updates-and-statistics-api
+                'me/share': 'people/~/network/updates?count=@{limit|250}',
+                list: 'companies?is-company-admin=true'
+            },
 
-			post: {
+            post: {
 
-				// See: https://developer.linkedin.com/documents/api-requests-json
-				'me/share': function(p, callback) {
-					var data = {
-						visibility: {
-							code: 'anyone'
-						}
-					};
+                // See: https://developer.linkedin.com/documents/api-requests-json
+                'me/share': function(p, callback) {
+                    var data = {
+                        visibility: {
+                            code: 'anyone'
+                        }
+                    };
 
-					if (p.data.id) {
+                    if (p.data.id) {
 
-						data.attribution = {
-							share: {
-								id: p.data.id
-							}
-						};
+                        data.attribution = {
+                            share: {
+                                id: p.data.id
+                            }
+                        };
 
-					}
-					else {
-						data.comment = p.data.message;
-						if (p.data.picture && p.data.link) {
-							data.content = {
-								'submitted-url': p.data.link,
-								'submitted-image-url': p.data.picture
-							};
-						}
-					}
+                    } else {
+                        data.comment = p.data.message;
+                        if (p.data.picture && p.data.link) {
+                            data.content = {
+                                'submitted-url': p.data.link,
+                                'submitted-image-url': p.data.picture
+                            };
+                        }
+                    }
 
-					p.data = JSON.stringify(data);
+                    p.data = JSON.stringify(data);
 
-					callback('people/~/shares?format=json');
-				},
+                    callback('people/~/shares?format=json');
+                },
 
-				'me/like': like
-			},
+                'me/like': like
+            },
 
-			del:{
-				'me/like': like
-			},
+            del: {
+                'me/like': like
+            },
 
-			wrap: {
-				me: function(o) {
-					formatError(o);
-					formatUser(o);
-					return o;
-				},
+            wrap: {
+                me: function(o) {
+                    formatError(o);
+                    formatUser(o);
+                    return o;
+                },
 
-				'me/friends': formatFriends,
-				'me/following': formatFriends,
-				'me/followers': formatFriends,
-				'me/share': function(o) {
-					formatError(o);
-					paging(o);
-					if (o.values) {
-						o.data = o.values.map(formatUser);
-						o.data.forEach(function(item) {
-							item.message = item.headline;
-						});
+                'me/friends': formatFriends,
+                'me/following': formatFriends,
+                'me/followers': formatFriends,
+                'me/share': function(o) {
+                    formatError(o);
+                    paging(o);
+                    if (o.values) {
+                        o.data = o.values.map(formatUser);
+                        o.data.forEach(function(item) {
+                            item.message = item.headline;
+                        });
 
-						delete o.values;
-					}
+                        delete o.values;
+                    }
 
-					return o;
-				},
+                    return o;
+                },
 
-				'default': function(o, headers) {
-					formatError(o);
-					empty(o, headers);
-					paging(o);
-				}
-			},
+                list: function(res) {
+                    if (res.error) {
+                        return res;
+                    }
+                    if (!res._total) {
+                        return {
+                            error: {
+                                message: 'you have no pages'
+                            }
+                        }
+                    }
+                    var data = res.values;
+                    return {
+                        data: data
+                    };
+                },
 
-			jsonp: function(p, qs) {
-				formatQuery(qs);
-				if (p.method === 'get') {
-					qs.format = 'jsonp';
-					qs['error-callback'] = p.callbackID;
-				}
-			},
+                'default': function(o, headers) {
+                    formatError(o);
+                    empty(o, headers);
+                    paging(o);
+                }
+            },
 
-			xhr: function(p, qs) {
-				if (p.method !== 'get') {
-					formatQuery(qs);
-					p.headers['Content-Type'] = 'application/json';
+            jsonp: function(p, qs) {
+                formatQuery(qs);
+                if (p.method === 'get') {
+                    qs.format = 'jsonp';
+                    qs['error-callback'] = p.callbackID;
+                }
+            },
 
-					// Note: x-li-format ensures error responses are not returned in XML
-					p.headers['x-li-format'] = 'json';
-					p.proxy = true;
-					return true;
-				}
+            xhr: function(p, qs) {
+                if (p.method !== 'get') {
+                    formatQuery(qs);
+                    p.headers['Content-Type'] = 'application/json';
 
-				return false;
-			}
-		}
-	});
+                    // Note: x-li-format ensures error responses are not returned in XML
+                    p.headers['x-li-format'] = 'json';
+                    p.proxy = true;
+                    return true;
+                }
 
-	function formatError(o) {
-		if (o && 'errorCode' in o) {
-			o.error = {
-				code: o.status,
-				message: o.message
-			};
-		}
-	}
+                return false;
+            }
+        }
+    });
 
-	function formatUser(o) {
-		if (o.error) {
-			return;
-		}
+    function formatError(o) {
+        if (o && 'errorCode' in o) {
+            o.error = {
+                code: o.status,
+                message: o.message
+            };
+        }
+    }
 
-		o.first_name = o.firstName;
-		o.last_name = o.lastName;
-		o.name = o.formattedName || (o.first_name + ' ' + o.last_name);
-		o.thumbnail = o.pictureUrl;
-		o.email = o.emailAddress;
-		return o;
-	}
+    function formatUser(o) {
+        if (o.error) {
+            return;
+        }
 
-	function formatFriends(o) {
-		formatError(o);
-		paging(o);
-		if (o.values) {
-			o.data = o.values.map(formatUser);
-			delete o.values;
-		}
+        o.first_name = o.firstName;
+        o.last_name = o.lastName;
+        o.name = o.formattedName || (o.first_name + ' ' + o.last_name);
+        o.thumbnail = o.pictureUrl;
+        o.email = o.emailAddress;
+        return o;
+    }
 
-		return o;
-	}
+    function formatFriends(o) {
+        formatError(o);
+        paging(o);
+        if (o.values) {
+            o.data = o.values.map(formatUser);
+            delete o.values;
+        }
 
-	function paging(res) {
-		if ('_count' in res && '_start' in res && (res._count + res._start) < res._total) {
-			res.paging = {
-				next: '?start=' + (res._start + res._count) + '&count=' + res._count
-			};
-		}
-	}
+        return o;
+    }
 
-	function empty(o, headers) {
-		if (JSON.stringify(o) === '{}' && headers.statusCode === 200) {
-			o.success = true;
-		}
-	}
+    function paging(res) {
+        if ('_count' in res && '_start' in res && (res._count + res._start) < res._total) {
+            res.paging = {
+                next: '?start=' + (res._start + res._count) + '&count=' + res._count
+            };
+        }
+    }
 
-	function formatQuery(qs) {
-		// LinkedIn signs requests with the parameter 'oauth2_access_token'
-		// ... yeah another one who thinks they should be different!
-		if (qs.access_token) {
-			qs.oauth2_access_token = qs.access_token;
-			delete qs.access_token;
-		}
-	}
+    function empty(o, headers) {
+        if (JSON.stringify(o) === '{}' && headers.statusCode === 200) {
+            o.success = true;
+        }
+    }
 
-	function like(p, callback) {
-		p.headers['x-li-format'] = 'json';
-		var id = p.data.id;
-		p.data = (p.method !== 'delete').toString();
-		p.method = 'put';
-		callback('people/~/network/updates/key=' + id + '/is-liked');
-	}
+    function formatQuery(qs) {
+        // LinkedIn signs requests with the parameter 'oauth2_access_token'
+        // ... yeah another one who thinks they should be different!
+        if (qs.access_token) {
+            qs.oauth2_access_token = qs.access_token;
+            delete qs.access_token;
+        }
+    }
+
+    function like(p, callback) {
+        p.headers['x-li-format'] = 'json';
+        var id = p.data.id;
+        p.data = (p.method !== 'delete').toString();
+        p.method = 'put';
+        callback('people/~/network/updates/key=' + id + '/is-liked');
+    }
 
 })(hello);
 
@@ -5146,224 +5176,231 @@ if (typeof chrome === 'object' && typeof chrome.identity === 'object' && chrome.
 
 (function(hello) {
 
-	var base = 'https://api.twitter.com/';
+    var base = 'https://api.twitter.com/';
 
-	hello.init({
+    hello.init({
 
-		twitter: {
+        twitter: {
 
-			// Ensure that you define an oauth_proxy
-			oauth: {
-				version: '1.0a',
-				auth: base + 'oauth/authenticate',
-				request: base + 'oauth/request_token',
-				token: base + 'oauth/access_token'
-			},
+            // Ensure that you define an oauth_proxy
+            oauth: {
+                version: '1.0a',
+                auth: base + 'oauth/authenticate',
+                request: base + 'oauth/request_token',
+                token: base + 'oauth/access_token'
+            },
 
-			login: function(p) {
-				// Reauthenticate
-				// https://dev.twitter.com/oauth/reference/get/oauth/authenticate
-				var prefix = '?force_login=true';
-				this.oauth.auth = this.oauth.auth.replace(prefix, '') + (p.options.force ? prefix : '');
-			},
+            login: function(p) {
+                // Reauthenticate
+                // https://dev.twitter.com/oauth/reference/get/oauth/authenticate
+                var prefix = '?force_login=true';
+                this.oauth.auth = this.oauth.auth.replace(prefix, '') + (p.options.force ? prefix : '');
+            },
 
-			base: base + '1.1/',
+            base: base + '1.1/',
 
-			get: {
-				me: 'account/verify_credentials.json',
-				'me/friends': 'friends/list.json?count=@{limit|200}',
-				'me/following': 'friends/list.json?count=@{limit|200}',
-				'me/followers': 'followers/list.json?count=@{limit|200}',
+            get: {
+                me: 'account/verify_credentials.json',
+                'me/friends': 'friends/list.json?count=@{limit|200}',
+                'me/following': 'friends/list.json?count=@{limit|200}',
+                'me/followers': 'followers/list.json?count=@{limit|200}',
 
-				// Https://dev.twitter.com/docs/api/1.1/get/statuses/user_timeline
-				'me/share': 'statuses/user_timeline.json?count=@{limit|200}',
+                // Https://dev.twitter.com/docs/api/1.1/get/statuses/user_timeline
+                'me/share': 'statuses/user_timeline.json?count=@{limit|200}',
 
-				// Https://dev.twitter.com/rest/reference/get/favorites/list
-				'me/like': 'favorites/list.json?count=@{limit|200}'
-			},
+                // Https://dev.twitter.com/rest/reference/get/favorites/list
+                'me/like': 'favorites/list.json?count=@{limit|200}',
+                list: ''
+            },
 
-			post: {
-				'me/share': function(p, callback) {
+            post: {
+                'me/share': function(p, callback) {
 
-					var data = p.data;
-					p.data = null;
+                    var data = p.data;
+                    p.data = null;
 
-					var status = [];
+                    var status = [];
 
-					// Change message to status
-					if (data.message) {
-						status.push(data.message);
-						delete data.message;
-					}
+                    // Change message to status
+                    if (data.message) {
+                        status.push(data.message);
+                        delete data.message;
+                    }
 
-					// If link is given
-					if (data.link) {
-						status.push(data.link);
-						delete data.link;
-					}
+                    // If link is given
+                    if (data.link) {
+                        status.push(data.link);
+                        delete data.link;
+                    }
 
-					if (data.picture) {
-						status.push(data.picture);
-						delete data.picture;
-					}
+                    if (data.picture) {
+                        status.push(data.picture);
+                        delete data.picture;
+                    }
 
-					// Compound all the components
-					if (status.length) {
-						data.status = status.join(' ');
-					}
+                    // Compound all the components
+                    if (status.length) {
+                        data.status = status.join(' ');
+                    }
 
-					// Tweet media
-					if (data.file) {
-						data['media[]'] = data.file;
-						delete data.file;
-						p.data = data;
-						callback('statuses/update_with_media.json');
-					}
+                    // Tweet media
+                    if (data.file) {
+                        data['media[]'] = data.file;
+                        delete data.file;
+                        p.data = data;
+                        callback('statuses/update_with_media.json');
+                    }
 
-					// Retweet?
-					else if ('id' in data) {
-						callback('statuses/retweet/' + data.id + '.json');
-					}
+                    // Retweet?
+                    else if ('id' in data) {
+                        callback('statuses/retweet/' + data.id + '.json');
+                    }
 
-					// Tweet
-					else {
-						// Assign the post body to the query parameters
-						hello.utils.extend(p.query, data);
-						callback('statuses/update.json?include_entities=1');
-					}
-				},
+                    // Tweet
+                    else {
+                        // Assign the post body to the query parameters
+                        hello.utils.extend(p.query, data);
+                        callback('statuses/update.json?include_entities=1');
+                    }
+                },
 
-				// See: https://dev.twitter.com/rest/reference/post/favorites/create
-				'me/like': function(p, callback) {
-					var id = p.data.id;
-					p.data = null;
-					callback('favorites/create.json?id=' + id);
-				}
-			},
+                // See: https://dev.twitter.com/rest/reference/post/favorites/create
+                'me/like': function(p, callback) {
+                    var id = p.data.id;
+                    p.data = null;
+                    callback('favorites/create.json?id=' + id);
+                }
+            },
 
-			del: {
+            del: {
 
-				// See: https://dev.twitter.com/rest/reference/post/favorites/destroy
-				'me/like': function() {
-					p.method = 'post';
-					var id = p.data.id;
-					p.data = null;
-					callback('favorites/destroy.json?id=' + id);
-				}
-			},
+                // See: https://dev.twitter.com/rest/reference/post/favorites/destroy
+                'me/like': function() {
+                    p.method = 'post';
+                    var id = p.data.id;
+                    p.data = null;
+                    callback('favorites/destroy.json?id=' + id);
+                }
+            },
 
-			wrap: {
-				me: function(res) {
-					formatError(res);
-					formatUser(res);
-					return res;
-				},
+            wrap: {
+                me: function(res) {
+                    formatError(res);
+                    formatUser(res);
+                    return res;
+                },
 
-				'me/friends': formatFriends,
-				'me/followers': formatFriends,
-				'me/following': formatFriends,
+                'me/friends': formatFriends,
+                'me/followers': formatFriends,
+                'me/following': formatFriends,
 
-				'me/share': function(res) {
-					formatError(res);
-					paging(res);
-					if (!res.error && 'length' in res) {
-						return {data: res};
-					}
+                'me/share': function(res) {
+                    formatError(res);
+                    paging(res);
+                    if (!res.error && 'length' in res) {
+                        return { data: res };
+                    }
 
-					return res;
-				},
+                    return res;
+                },
 
-				'default': function(res) {
-					res = arrayToDataResponse(res);
-					paging(res);
-					return res;
-				}
-			},
-			xhr: function(p) {
+                'list': function() {
+                    return {
+                        data: []
+                    };
+                },
 
-				// Rely on the proxy for non-GET requests.
-				return (p.method !== 'get');
-			}
-		}
-	});
+                'default': function(res) {
+                    res = arrayToDataResponse(res);
+                    paging(res);
+                    return res;
+                }
+            },
+            xhr: function(p) {
 
-	function formatUser(o) {
-		if (o.id) {
-			if (o.name) {
-				var m = o.name.split(' ');
-				o.first_name = m.shift();
-				o.last_name = m.join(' ');
-			}
+                // Rely on the proxy for non-GET requests.
+                return (p.method !== 'get');
+            }
+        }
+    });
 
-			// See: https://dev.twitter.com/overview/general/user-profile-images-and-banners
-			o.thumbnail = o.profile_image_url_https || o.profile_image_url;
-		}
+    function formatUser(o) {
+        if (o.id) {
+            if (o.name) {
+                var m = o.name.split(' ');
+                o.first_name = m.shift();
+                o.last_name = m.join(' ');
+            }
 
-		return o;
-	}
+            // See: https://dev.twitter.com/overview/general/user-profile-images-and-banners
+            o.thumbnail = o.profile_image_url_https || o.profile_image_url;
+        }
 
-	function formatFriends(o) {
-		formatError(o);
-		paging(o);
-		if (o.users) {
-			o.data = o.users.map(formatUser);
-			delete o.users;
-		}
+        return o;
+    }
 
-		return o;
-	}
+    function formatFriends(o) {
+        formatError(o);
+        paging(o);
+        if (o.users) {
+            o.data = o.users.map(formatUser);
+            delete o.users;
+        }
 
-	function formatError(o) {
-		if (o.errors) {
-			var e = o.errors[0];
-			o.error = {
-				code: 'request_failed',
-				message: e.message
-			};
-		}
-	}
+        return o;
+    }
 
-	// Take a cursor and add it to the path
-	function paging(res) {
-		// Does the response include a 'next_cursor_string'
-		if ('next_cursor_str' in res) {
-			// See: https://dev.twitter.com/docs/misc/cursoring
-			res.paging = {
-				next: '?cursor=' + res.next_cursor_str
-			};
-		}
-	}
+    function formatError(o) {
+        if (o.errors) {
+            var e = o.errors[0];
+            o.error = {
+                code: 'request_failed',
+                message: e.message
+            };
+        }
+    }
 
-	function arrayToDataResponse(res) {
-		return Array.isArray(res) ? {data: res} : res;
-	}
+    // Take a cursor and add it to the path
+    function paging(res) {
+        // Does the response include a 'next_cursor_string'
+        if ('next_cursor_str' in res) {
+            // See: https://dev.twitter.com/docs/misc/cursoring
+            res.paging = {
+                next: '?cursor=' + res.next_cursor_str
+            };
+        }
+    }
 
-	/**
-	// The documentation says to define user in the request
-	// Although its not actually required.
+    function arrayToDataResponse(res) {
+        return Array.isArray(res) ? { data: res } : res;
+    }
 
-	var user_id;
+    /**
+    // The documentation says to define user in the request
+    // Although its not actually required.
 
-	function withUserId(callback){
-		if(user_id){
-			callback(user_id);
-		}
-		else{
-			hello.api('twitter:/me', function(o){
-				user_id = o.id;
-				callback(o.id);
-			});
-		}
-	}
+    var user_id;
 
-	function sign(url){
-		return function(p, callback){
-			withUserId(function(user_id){
-				callback(url+'?user_id='+user_id);
-			});
-		};
-	}
-	*/
+    function withUserId(callback){
+        if(user_id){
+            callback(user_id);
+        }
+        else{
+            hello.api('twitter:/me', function(o){
+                user_id = o.id;
+                callback(o.id);
+            });
+        }
+    }
+
+    function sign(url){
+        return function(p, callback){
+            withUserId(function(user_id){
+                callback(url+'?user_id='+user_id);
+            });
+        };
+    }
+    */
 
 })(hello);
 
@@ -5457,6 +5494,175 @@ if (typeof chrome === 'object' && typeof chrome.identity === 'object' && chrome.
 		}
 	}
 
+})(hello);
+
+(function(hello) {
+    var contactsUrl = 'https://www.google.com/m8/feeds/contacts/default/full?v=3.0&alt=json&max-results=@{limit|1000}&start-index=@{start|1}';
+
+    hello.init({
+
+        youtube: {
+
+            name: 'YouTube',
+
+            // See: http://code.google.com/apis/accounts/docs/OAuth2UserAgent.html
+            oauth: {
+                version: 2,
+                auth: 'https://accounts.google.com/o/oauth2/auth',
+                grant: 'https://accounts.google.com/o/oauth2/token'
+            },
+
+            // Authorization scopes
+            scope: {
+                basic: 'https://www.googleapis.com/auth/plus.me profile',
+                email: 'email',
+                birthday: '',
+                events: '',
+                photos: 'https://picasaweb.google.com/data/',
+                videos: 'http://gdata.youtube.com',
+                friends: 'https://www.google.com/m8/feeds, https://www.googleapis.com/auth/plus.login',
+                files: 'https://www.googleapis.com/auth/drive.readonly',
+                publish: '',
+                publish_files: 'https://www.googleapis.com/auth/drive',
+                create_event: '',
+                offline_access: ''
+            },
+
+            scope_delim: ' ',
+
+            login: function(p) {
+                if (p.qs.display === 'none') {
+                    // Google doesn't like display=none
+                    p.qs.display = '';
+                }
+
+                if (p.qs.response_type === 'code') {
+
+                    // Let's set this to an offline access to return a refresh_token
+                    p.qs.access_type = 'offline';
+                }
+
+                // Reauthenticate
+                // https://developers.google.com/identity/protocols/
+                if (p.options.force) {
+                    p.qs.approval_prompt = 'force';
+                }
+            },
+
+            // API base URI
+            base: 'https://www.googleapis.com/',
+
+            // Map GET requests
+            get: {
+                me: 'plus/v1/people/me',
+                list: ''
+            },
+            wrap: {
+                'list': function() {
+                    return {
+                        data: []
+                    };
+                }
+            }
+        }
+    });
+})(hello);
+
+(function(hello) {
+
+    var contactsUrl = 'https://www.google.com/m8/feeds/contacts/default/full?v=3.0&alt=json&max-results=@{limit|1000}&start-index=@{start|1}';
+
+    hello.init({
+        gAnalytics: {
+
+            name: 'Google Analytics',
+
+            // See: http://code.google.com/apis/accounts/docs/OAuth2UserAgent.html
+            oauth: {
+                version: 2,
+                auth: 'https://accounts.google.com/o/oauth2/auth',
+                grant: 'https://accounts.google.com/o/oauth2/token'
+            },
+
+            // Authorization scopes
+            scope: {
+                basic: 'https://www.googleapis.com/auth/plus.me profile',
+                email: 'email',
+                birthday: '',
+                events: '',
+                photos: 'https://picasaweb.google.com/data/',
+                videos: 'http://gdata.youtube.com',
+                friends: 'https://www.google.com/m8/feeds, https://www.googleapis.com/auth/plus.login',
+                files: 'https://www.googleapis.com/auth/drive.readonly',
+                publish: '',
+                publish_files: 'https://www.googleapis.com/auth/drive',
+                create_event: '',
+                offline_access: ''
+            },
+
+            scope_delim: ' ',
+
+            login: function(p) {
+                if (p.qs.display === 'none') {
+                    // Google doesn't like display=none
+                    p.qs.display = '';
+                }
+
+                if (p.qs.response_type === 'code') {
+
+                    // Let's set this to an offline access to return a refresh_token
+                    p.qs.access_type = 'offline';
+                }
+
+                // Reauthenticate
+                // https://developers.google.com/identity/protocols/
+                if (p.options.force) {
+                    p.qs.approval_prompt = 'force';
+                }
+            },
+
+            // API base URI
+            base: 'https://www.googleapis.com/',
+
+            // Map GET requests
+            get: {
+                me: 'plus/v1/people/me',
+                list: 'analytics/v3/management/accountSummaries'
+            },
+            wrap: {
+                list: function(res) {
+                    if (res.error && res.error.code === 403) {
+                        return {
+                            error: {
+                                message: 'you have no pages'
+                            }
+                        }
+                    }
+
+                    if (res.error) {
+                        return res;
+                    }
+
+                    var data = [];
+                    res.items.forEach(function(account) {
+                        account.webProperties.forEach(function(property) {
+                            property.profiles.forEach(function(profile) {
+                                data.push({
+                                    accountID: account.id,
+                                    propertyID: property.id,
+                                    id: profile.id,
+                                    name: account.name + '-' + property.name + '-' + profile.name
+                                });
+                            });
+                        });
+                    });
+                    return {
+                        data: data
+                    };
+                }
+            }
+        }
+    });
 })(hello);
 
 (function(hello) {

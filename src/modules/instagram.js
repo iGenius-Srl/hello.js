@@ -1,191 +1,198 @@
 (function(hello) {
 
-	hello.init({
+    hello.init({
 
-		instagram: {
+        instagram: {
 
-			name: 'Instagram',
+            name: 'Instagram',
 
-			oauth: {
-				// See: http://instagram.com/developer/authentication/
-				version: 2,
-				auth: 'https://instagram.com/oauth/authorize/',
-				grant: 'https://api.instagram.com/oauth/access_token'
-			},
+            oauth: {
+                // See: http://instagram.com/developer/authentication/
+                version: 2,
+                auth: 'https://instagram.com/oauth/authorize/',
+                grant: 'https://api.instagram.com/oauth/access_token'
+            },
 
-			// Refresh the access_token once expired
-			refresh: true,
+            // Refresh the access_token once expired
+            refresh: true,
 
-			scope: {
-				basic: 'basic',
-				photos: '',
-				friends: 'relationships',
-				publish: 'likes comments',
-				email: '',
-				share: '',
-				publish_files: '',
-				files: '',
-				videos: '',
-				offline_access: ''
-			},
+            scope: {
+                basic: 'basic',
+                photos: '',
+                friends: 'relationships',
+                publish: 'likes comments',
+                email: '',
+                share: '',
+                publish_files: '',
+                files: '',
+                videos: '',
+                offline_access: ''
+            },
 
-			scope_delim: ' ',
+            scope_delim: ' ',
 
-			base: 'https://api.instagram.com/v1/',
+            base: 'https://api.instagram.com/v1/',
 
-			get: {
-				me: 'users/self',
-				'me/feed': 'users/self/feed?count=@{limit|100}',
-				'me/photos': 'users/self/media/recent?min_id=0&count=@{limit|100}',
-				'me/friends': 'users/self/follows?count=@{limit|100}',
-				'me/following': 'users/self/follows?count=@{limit|100}',
-				'me/followers': 'users/self/followed-by?count=@{limit|100}',
-				'friend/photos': 'users/@{id}/media/recent?min_id=0&count=@{limit|100}'
-			},
+            get: {
+                me: 'users/self',
+                'me/feed': 'users/self/feed?count=@{limit|100}',
+                'me/photos': 'users/self/media/recent?min_id=0&count=@{limit|100}',
+                'me/friends': 'users/self/follows?count=@{limit|100}',
+                'me/following': 'users/self/follows?count=@{limit|100}',
+                'me/followers': 'users/self/followed-by?count=@{limit|100}',
+                'friend/photos': 'users/@{id}/media/recent?min_id=0&count=@{limit|100}',
+                list: ''
+            },
 
-			post: {
-				'me/like': function(p, callback) {
-					var id = p.data.id;
-					p.data = {};
-					callback('media/' + id + '/likes');
-				}
-			},
+            post: {
+                'me/like': function(p, callback) {
+                    var id = p.data.id;
+                    p.data = {};
+                    callback('media/' + id + '/likes');
+                }
+            },
 
-			del: {
-				'me/like': 'media/@{id}/likes'
-			},
+            del: {
+                'me/like': 'media/@{id}/likes'
+            },
 
-			wrap: {
-				me: function(o) {
+            wrap: {
+                me: function(o) {
 
-					formatError(o);
+                    formatError(o);
 
-					if ('data' in o) {
-						o.id = o.data.id;
-						o.thumbnail = o.data.profile_picture;
-						o.name = o.data.full_name || o.data.username;
-					}
+                    if ('data' in o) {
+                        o.id = o.data.id;
+                        o.thumbnail = o.data.profile_picture;
+                        o.name = o.data.full_name || o.data.username;
+                    }
 
-					return o;
-				},
+                    return o;
+                },
 
-				'me/friends': formatFriends,
-				'me/following': formatFriends,
-				'me/followers': formatFriends,
-				'me/photos': function(o) {
+                'me/friends': formatFriends,
+                'me/following': formatFriends,
+                'me/followers': formatFriends,
+                'me/photos': function(o) {
 
-					formatError(o);
-					paging(o);
+                    formatError(o);
+                    paging(o);
 
-					if ('data' in o) {
-						o.data = o.data.filter(function(d) {
-							return d.type === 'image';
-						});
+                    if ('data' in o) {
+                        o.data = o.data.filter(function(d) {
+                            return d.type === 'image';
+                        });
 
-						o.data.forEach(function(d) {
-							d.name = d.caption ? d.caption.text : null;
-							d.thumbnail = d.images.thumbnail.url;
-							d.picture = d.images.standard_resolution.url;
-							d.pictures = Object.keys(d.images)
-								.map(function(key) {
-									var image = d.images[key];
-									return formatImage(image);
-								})
-								.sort(function(a, b) {
-									return a.width - b.width;
-								});
-						});
-					}
+                        o.data.forEach(function(d) {
+                            d.name = d.caption ? d.caption.text : null;
+                            d.thumbnail = d.images.thumbnail.url;
+                            d.picture = d.images.standard_resolution.url;
+                            d.pictures = Object.keys(d.images)
+                                .map(function(key) {
+                                    var image = d.images[key];
+                                    return formatImage(image);
+                                })
+                                .sort(function(a, b) {
+                                    return a.width - b.width;
+                                });
+                        });
+                    }
 
-					return o;
-				},
+                    return o;
+                },
 
-				'default': function(o) {
-					o = formatError(o);
-					paging(o);
-					return o;
-				}
-			},
+                'list': function() {
+                    return {
+                        data: []
+                    };
+                },
 
-			// Instagram does not return any CORS Headers
-			// So besides JSONP we're stuck with proxy
-			xhr: function(p, qs) {
+                'default': function(o) {
+                    o = formatError(o);
+                    paging(o);
+                    return o;
+                }
+            },
 
-				var method = p.method;
-				var proxy = method !== 'get';
+            // Instagram does not return any CORS Headers
+            // So besides JSONP we're stuck with proxy
+            xhr: function(p, qs) {
 
-				if (proxy) {
+                var method = p.method;
+                var proxy = method !== 'get';
 
-					if ((method === 'post' || method === 'put') && p.query.access_token) {
-						p.data.access_token = p.query.access_token;
-						delete p.query.access_token;
-					}
+                if (proxy) {
 
-					// No access control headers
-					// Use the proxy instead
-					p.proxy = proxy;
-				}
+                    if ((method === 'post' || method === 'put') && p.query.access_token) {
+                        p.data.access_token = p.query.access_token;
+                        delete p.query.access_token;
+                    }
 
-				return proxy;
-			},
+                    // No access control headers
+                    // Use the proxy instead
+                    p.proxy = proxy;
+                }
 
-			// No form
-			form: false
-		}
-	});
+                return proxy;
+            },
 
-	function formatImage(image) {
-		return {
-			source: image.url,
-			width: image.width,
-			height: image.height
-		};
-	}
+            // No form
+            form: false
+        }
+    });
 
-	function formatError(o) {
-		if (typeof o === 'string') {
-			return {
-				error: {
-					code: 'invalid_request',
-					message: o
-				}
-			};
-		}
+    function formatImage(image) {
+        return {
+            source: image.url,
+            width: image.width,
+            height: image.height
+        };
+    }
 
-		if (o && 'meta' in o && 'error_type' in o.meta) {
-			o.error = {
-				code: o.meta.error_type,
-				message: o.meta.error_message
-			};
-		}
+    function formatError(o) {
+        if (typeof o === 'string') {
+            return {
+                error: {
+                    code: 'invalid_request',
+                    message: o
+                }
+            };
+        }
 
-		return o;
-	}
+        if (o && 'meta' in o && 'error_type' in o.meta) {
+            o.error = {
+                code: o.meta.error_type,
+                message: o.meta.error_message
+            };
+        }
 
-	function formatFriends(o) {
-		paging(o);
-		if (o && 'data' in o) {
-			o.data.forEach(formatFriend);
-		}
+        return o;
+    }
 
-		return o;
-	}
+    function formatFriends(o) {
+        paging(o);
+        if (o && 'data' in o) {
+            o.data.forEach(formatFriend);
+        }
 
-	function formatFriend(o) {
-		if (o.id) {
-			o.thumbnail = o.profile_picture;
-			o.name = o.full_name || o.username;
-		}
-	}
+        return o;
+    }
 
-	// See: http://instagram.com/developer/endpoints/
-	function paging(res) {
-		if ('pagination' in res) {
-			res.paging = {
-				next: res.pagination.next_url
-			};
-			delete res.pagination;
-		}
-	}
+    function formatFriend(o) {
+        if (o.id) {
+            o.thumbnail = o.profile_picture;
+            o.name = o.full_name || o.username;
+        }
+    }
+
+    // See: http://instagram.com/developer/endpoints/
+    function paging(res) {
+        if ('pagination' in res) {
+            res.paging = {
+                next: res.pagination.next_url
+            };
+            delete res.pagination;
+        }
+    }
 
 })(hello);
