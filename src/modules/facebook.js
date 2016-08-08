@@ -81,7 +81,7 @@
                 'me/photo': '@{id}',
                 'friend/albums': '@{id}/albums',
                 'friend/photos': '@{id}/photos',
-                list: 'me/accounts?fields=id,name&limit=400'
+                list: 'me/accounts?fields=id,name,picture{url}&limit=400'
                     // Pagination
                     // Https://developers.facebook.com/docs/reference/api/pagination/
             },
@@ -110,14 +110,20 @@
                     if (!res.data.length) {
                         return {
                             error: {
+                                status: 404,
                                 message: 'you have no pages'
                             }
                         }
                     }
-                    var data = res.data;
-                    return {
-                        data: data
-                    };
+
+                    res.data;
+                    return res.data.map(function(d){
+                        return {
+                            id: d.id,
+                            name: d.name,
+                            image: d.picture.data.url
+                        };
+                    });
                 }
             },
 

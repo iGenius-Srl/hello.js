@@ -35,7 +35,7 @@
 
                 // See: http://developer.linkedin.com/documents/get-network-updates-and-statistics-api
                 'me/share': 'people/~/network/updates?count=@{limit|250}',
-                list: 'companies?is-company-admin=true'
+                list: 'companies:(id,name,logo-url)?is-company-admin=true'
             },
 
             post: {
@@ -110,14 +110,18 @@
                     if (!res._total) {
                         return {
                             error: {
+                                status: 404,
                                 message: 'you have no pages'
                             }
                         }
                     }
-                    var data = res.values;
-                    return {
-                        data: data
-                    };
+                    return res.values.map(function (d) {
+                        return {
+                            id: d.id,
+                            name: d.name,
+                            image: d.logoUrl
+                        }
+                    });
                 },
 
                 'default': function(o, headers) {

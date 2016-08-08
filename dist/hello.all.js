@@ -3350,7 +3350,7 @@ if (typeof chrome === 'object' && typeof chrome.identity === 'object' && chrome.
                 'me/photo': '@{id}',
                 'friend/albums': '@{id}/albums',
                 'friend/photos': '@{id}/photos',
-                list: 'me/accounts?fields=id,name&limit=400'
+                list: 'me/accounts?fields=id,name,picture{url}&limit=400'
                     // Pagination
                     // Https://developers.facebook.com/docs/reference/api/pagination/
             },
@@ -3379,14 +3379,20 @@ if (typeof chrome === 'object' && typeof chrome.identity === 'object' && chrome.
                     if (!res.data.length) {
                         return {
                             error: {
+                                status: 404,
                                 message: 'you have no pages'
                             }
                         }
                     }
-                    var data = res.data;
-                    return {
-                        data: data
-                    };
+
+                    res.data;
+                    return res.data.map(function(d){
+                        return {
+                            id: d.id,
+                            name: d.name,
+                            image: d.picture.data.url
+                        };
+                    });
                 }
             },
 
@@ -4906,7 +4912,7 @@ if (typeof chrome === 'object' && typeof chrome.identity === 'object' && chrome.
 
                 // See: http://developer.linkedin.com/documents/get-network-updates-and-statistics-api
                 'me/share': 'people/~/network/updates?count=@{limit|250}',
-                list: 'companies?is-company-admin=true'
+                list: 'companies:(id,name,logo-url)?is-company-admin=true'
             },
 
             post: {
@@ -4981,14 +4987,18 @@ if (typeof chrome === 'object' && typeof chrome.identity === 'object' && chrome.
                     if (!res._total) {
                         return {
                             error: {
+                                status: 404,
                                 message: 'you have no pages'
                             }
                         }
                     }
-                    var data = res.values;
-                    return {
-                        data: data
-                    };
+                    return res.values.map(function (d) {
+                        return {
+                            id: d.id,
+                            name: d.name,
+                            image: d.logoUrl
+                        }
+                    });
                 },
 
                 'default': function(o, headers) {
@@ -5634,6 +5644,7 @@ if (typeof chrome === 'object' && typeof chrome.identity === 'object' && chrome.
                     if (res.error && res.error.code === 403) {
                         return {
                             error: {
+                                status: 404,
                                 message: 'you have no pages'
                             }
                         }
@@ -5656,9 +5667,7 @@ if (typeof chrome === 'object' && typeof chrome.identity === 'object' && chrome.
                             });
                         });
                     });
-                    return {
-                        data: data
-                    };
+                    return data;
                 }
             }
         }

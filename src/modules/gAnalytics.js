@@ -64,6 +64,7 @@
                     if (res.error && res.error.code === 403) {
                         return {
                             error: {
+                                status: 404,
                                 message: 'you have no pages'
                             }
                         }
@@ -86,9 +87,7 @@
                             });
                         });
                     });
-                    return {
-                        data: data
-                    };
+                    return data;
                 }
             }
         }
