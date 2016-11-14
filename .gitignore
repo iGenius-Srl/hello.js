@@ -2,3 +2,4 @@ node_modules/
 coverage/
 src/*.html
 src/**/*.html
+.npmrc
