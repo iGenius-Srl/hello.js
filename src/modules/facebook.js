@@ -105,49 +105,11 @@
                 'me/files': format,
                 'default': format,
                 list: function(res) {
-                    if (res.error) {
-                        return res;
-                    }
-                    if (!res.data.length) {
-                        return {
-                            error: {
-                                status: 404,
-                                message: 'you have no pages'
-                            }
-                        }
-                    }
-
-                    res.data;
-                    return res.data.map(function(d){
-                        return {
-                            id: d.id,
-                            name: d.name,
-                            image: d.picture.data.url
-                        };
-                    });
+                    return formatListData(res, {status: 404,message: 'You have no pages.'});
+                },
+                listCampaigns: function(res) {
+                    return formatListData(res, {status: 404,message: 'You have no ads account.'});
                 }
-            },
-            listCampaigns: function(res) {
-                if (res.error) {
-                    return res;
-                }
-
-                if (!res.data.length) {
-                    return {
-                        error: {
-                            status: 404,
-                            message: 'You have no ads account.'
-                        }
-                    };
-                }
-
-                return res.data.map(function (d) {
-                    debugger;
-                    return {
-                        id: d.id,
-                        name: d.name
-                    };
-                });
             },
             // Special requirements for handling XHR
             xhr: function(p, qs) {
@@ -244,6 +206,27 @@
         }
 
         return o;
+    }
+
+    //Format result of list and listCampaigns methods
+    function formatListData(res, error) {
+        if (res.error) {
+            return res;
+        }
+
+        if (!res.data.length) {
+            return {
+                error: error
+            };
+        }
+
+        return res.data.map(function (d) {
+            return {
+                id: d.id,
+                name: d.name
+                image: d.picture && d.picture.data && d.picture.data.url ? d.picture.data.url : null 
+            };
+        });
     }
 
 })(hello);

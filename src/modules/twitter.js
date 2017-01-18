@@ -139,29 +139,28 @@
                     res = arrayToDataResponse(res);
                     paging(res);
                     return res;
-                }
-            },
-            listCampaigns: function(res) {
-                if (res.error) {
-                    return res;
-                }
+                },
+                listCampaigns: function(res) {
+                    if (res.error) {
+                        return res;
+                    }
 
-                if (!res.data.length) {
-                    return {
-                        error: {
-                            status: 404,
-                            message: 'You have no ads account.'
-                        }
-                    };
-                }
+                    if (!res.data.length) {
+                        return {
+                            error: {
+                                status: 404,
+                                message: 'You have no ads account.'
+                            }
+                        };
+                    }
 
-                return res.data.map(function (d) {
-                    debugger;
-                    return {
-                        id: d.id,
-                        name: d.name
-                    };
-                });
+                    return res.data.map(function (d) {
+                        return {
+                            id: d.id,
+                            name: d.name
+                        };
+                    });
+                }
             },
             xhr: function(p) {
 
