@@ -223,8 +223,8 @@
         return res.data.map(function (d) {
             return {
                 id: d.id,
-                name: d.name
-                image: d.picture && d.picture.data && d.picture.data.url ? d.picture.data.url : null 
+                name: d.name,
+                image: d.picture && d.picture.data && d.picture.data.url ? d.picture.data.url : null
             };
         });
     }

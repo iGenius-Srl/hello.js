@@ -1,4 +1,4 @@
-/*! hellojs v1.13.1 | (c) 2012-2016 Andrew Dodson | MIT https://adodson.com/hello.js/LICENSE */
+/*! @igenius_dev/hellojs v1.1.1 | (c) 2012-2017 Andrew Dodson | MIT https://adodson.com/hello.js/LICENSE */
 // ES5 Object.create
 if (!Object.create) {
 
@@ -3333,7 +3333,7 @@ if (typeof chrome === 'object' && typeof chrome.identity === 'object' && chrome.
             },
 
             // API Base URL
-            base: 'https://graph.facebook.com/v2.6/',
+            base: 'https://graph.facebook.com/v2.8/',
 
             // Map GET requests
             get: {
@@ -3350,7 +3350,8 @@ if (typeof chrome === 'object' && typeof chrome.identity === 'object' && chrome.
                 'me/photo': '@{id}',
                 'friend/albums': '@{id}/albums',
                 'friend/photos': '@{id}/photos',
-                list: 'me/accounts?fields=id,name,picture{url}&limit=400'
+                list: 'me/accounts?fields=id,name,picture{url}&limit=400',
+                listCampaigns: 'me/adaccounts?fields=name&limit=400',
                     // Pagination
                     // Https://developers.facebook.com/docs/reference/api/pagination/
             },
@@ -3373,29 +3374,12 @@ if (typeof chrome === 'object' && typeof chrome.identity === 'object' && chrome.
                 'me/files': format,
                 'default': format,
                 list: function(res) {
-                    if (res.error) {
-                        return res;
-                    }
-                    if (!res.data.length) {
-                        return {
-                            error: {
-                                status: 404,
-                                message: 'you have no pages'
-                            }
-                        }
-                    }
-
-                    res.data;
-                    return res.data.map(function(d){
-                        return {
-                            id: d.id,
-                            name: d.name,
-                            image: d.picture.data.url
-                        };
-                    });
+                    return formatListData(res, {status: 404,message: 'You have no pages.'});
+                },
+                listCampaigns: function(res) {
+                    return formatListData(res, {status: 404,message: 'You have no ads account.'});
                 }
             },
-
             // Special requirements for handling XHR
             xhr: function(p, qs) {
                 if (p.method === 'get' || p.method === 'post') {
@@ -3491,6 +3475,27 @@ if (typeof chrome === 'object' && typeof chrome.identity === 'object' && chrome.
         }
 
         return o;
+    }
+
+    //Format result of list and listCampaigns methods
+    function formatListData(res, error) {
+        if (res.error) {
+            return res;
+        }
+
+        if (!res.data.length) {
+            return {
+                error: error
+            };
+        }
+
+        return res.data.map(function (d) {
+            return {
+                id: d.id,
+                name: d.name,
+                image: d.picture && d.picture.data && d.picture.data.url ? d.picture.data.url : null
+            };
+        });
     }
 
 })(hello);
@@ -5220,7 +5225,8 @@ if (typeof chrome === 'object' && typeof chrome.identity === 'object' && chrome.
 
                 // Https://dev.twitter.com/rest/reference/get/favorites/list
                 'me/like': 'favorites/list.json?count=@{limit|200}',
-                list: ''
+                list: '',
+                listCampaigns: 'accounts'
             },
 
             post: {
@@ -5324,6 +5330,27 @@ if (typeof chrome === 'object' && typeof chrome.identity === 'object' && chrome.
                     res = arrayToDataResponse(res);
                     paging(res);
                     return res;
+                },
+                listCampaigns: function(res) {
+                    if (res.error) {
+                        return res;
+                    }
+
+                    if (!res.data.length) {
+                        return {
+                            error: {
+                                status: 404,
+                                message: 'You have no ads account.'
+                            }
+                        };
+                    }
+
+                    return res.data.map(function (d) {
+                        return {
+                            id: d.id,
+                            name: d.name
+                        };
+                    });
                 }
             },
             xhr: function(p) {
