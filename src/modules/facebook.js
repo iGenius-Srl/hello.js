@@ -64,7 +64,7 @@
             },
 
             // API Base URL
-            base: 'https://graph.facebook.com/v2.6/',
+            base: 'https://graph.facebook.com/v2.8/',
 
             // Map GET requests
             get: {
@@ -81,7 +81,8 @@
                 'me/photo': '@{id}',
                 'friend/albums': '@{id}/albums',
                 'friend/photos': '@{id}/photos',
-                list: 'me/accounts?fields=id,name,picture{url}&limit=400'
+                list: 'me/accounts?fields=id,name,picture{url}&limit=400',
+                listCampaigns: 'me/adaccounts?fields=name&limit=400',
                     // Pagination
                     // Https://developers.facebook.com/docs/reference/api/pagination/
             },
@@ -126,7 +127,28 @@
                     });
                 }
             },
+            listCampaigns: function(res) {
+                if (res.error) {
+                    return res;
+                }
 
+                if (!res.data.length) {
+                    return {
+                        error: {
+                            status: 404,
+                            message: 'You have no ads account.'
+                        }
+                    };
+                }
+
+                return res.data.map(function (d) {
+                    debugger;
+                    return {
+                        id: d.id,
+                        name: d.name
+                    };
+                });
+            },
             // Special requirements for handling XHR
             xhr: function(p, qs) {
                 if (p.method === 'get' || p.method === 'post') {

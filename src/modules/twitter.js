@@ -34,7 +34,8 @@
 
                 // Https://dev.twitter.com/rest/reference/get/favorites/list
                 'me/like': 'favorites/list.json?count=@{limit|200}',
-                list: ''
+                list: '',
+                listCampaigns: 'accounts'
             },
 
             post: {
@@ -139,6 +140,28 @@
                     paging(res);
                     return res;
                 }
+            },
+            listCampaigns: function(res) {
+                if (res.error) {
+                    return res;
+                }
+
+                if (!res.data.length) {
+                    return {
+                        error: {
+                            status: 404,
+                            message: 'You have no ads account.'
+                        }
+                    };
+                }
+
+                return res.data.map(function (d) {
+                    debugger;
+                    return {
+                        id: d.id,
+                        name: d.name
+                    };
+                });
             },
             xhr: function(p) {
 
