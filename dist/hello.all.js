@@ -1,4 +1,4 @@
-/*! @igenius_dev/hellojs v1.1.1 | (c) 2012-2017 Andrew Dodson | MIT https://adodson.com/hello.js/LICENSE */
+/*! @igenius_dev/hellojs v1.2.1 | (c) 2012-2017 Andrew Dodson | MIT https://adodson.com/hello.js/LICENSE */
 // ES5 Object.create
 if (!Object.create) {
 
@@ -3337,7 +3337,7 @@ if (typeof chrome === 'object' && typeof chrome.identity === 'object' && chrome.
 
             // Map GET requests
             get: {
-                me: 'me?fields=email,first_name,last_name,name,timezone,verified',
+                'me': 'me?fields=email,first_name,last_name,name,timezone,verified',
                 'me/friends': 'me/friends',
                 'me/following': 'me/friends',
                 'me/followers': 'me/friends',
@@ -3350,8 +3350,8 @@ if (typeof chrome === 'object' && typeof chrome.identity === 'object' && chrome.
                 'me/photo': '@{id}',
                 'friend/albums': '@{id}/albums',
                 'friend/photos': '@{id}/photos',
-                list: 'me/accounts?fields=id,name,picture{url}&limit=400',
-                listCampaigns: 'me/adaccounts?fields=name&limit=400',
+                'list': 'me/accounts?fields=id,name,picture{url}&limit=400',
+                'listCampaigns': 'me/adaccounts?fields=name,currency&limit=400',
                     // Pagination
                     // Https://developers.facebook.com/docs/reference/api/pagination/
             },
@@ -3365,7 +3365,7 @@ if (typeof chrome === 'object' && typeof chrome.identity === 'object' && chrome.
             },
 
             wrap: {
-                me: formatUser,
+                'me': formatUser,
                 'me/friends': formatFriends,
                 'me/following': formatFriends,
                 'me/followers': formatFriends,
@@ -3373,10 +3373,10 @@ if (typeof chrome === 'object' && typeof chrome.identity === 'object' && chrome.
                 'me/photos': format,
                 'me/files': format,
                 'default': format,
-                list: function(res) {
+                'list': function(res) {
                     return formatListData(res, {status: 404,message: 'You have no pages.'});
                 },
-                listCampaigns: function(res) {
+                'listCampaigns': function(res) {
                     return formatListData(res, {status: 404,message: 'You have no ads account.'});
                 }
             },
