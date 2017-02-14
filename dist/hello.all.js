@@ -1,4 +1,4 @@
-/*! @igenius_dev/hellojs v1.2.1 | (c) 2012-2017 Andrew Dodson | MIT https://adodson.com/hello.js/LICENSE */
+/*! @igenius_dev/hellojs v1.2.2 | (c) 2012-2017 Andrew Dodson | MIT https://adodson.com/hello.js/LICENSE */
 // ES5 Object.create
 if (!Object.create) {
 
@@ -3493,6 +3493,7 @@ if (typeof chrome === 'object' && typeof chrome.identity === 'object' && chrome.
             return {
                 id: d.id,
                 name: d.name,
+                currency: d.currency,
                 image: d.picture && d.picture.data && d.picture.data.url ? d.picture.data.url : null
             };
         });
