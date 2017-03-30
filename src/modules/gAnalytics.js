@@ -82,8 +82,11 @@
                                     accountID: account.id,
                                     propertyID: property.id,
                                     id: profile.id,
-                                    name: account.name + '-' + property.name + '-' + profile.name
-                                });
+                                    accountName: account.name,
+									name: property.name,
+									gAnalContent: profile.name,
+									entityName: account.name + '-' + property.name + '-' + profile.name
+								});
                             });
                         });
                     });

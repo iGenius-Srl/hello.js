@@ -3,3 +3,4 @@ coverage/
 src/*.html
 src/**/*.html
 .npmrc
+.idea
