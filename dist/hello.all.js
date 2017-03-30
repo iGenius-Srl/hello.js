@@ -1,4 +1,4 @@
-/*! @igenius_dev/hellojs v1.2.2 | (c) 2012-2017 Andrew Dodson | MIT https://adodson.com/hello.js/LICENSE */
+/*! @igenius_dev/hellojs v1.2.3 | (c) 2012-2017 Andrew Dodson | MIT https://adodson.com/hello.js/LICENSE */
 // ES5 Object.create
 if (!Object.create) {
 
@@ -5690,8 +5690,11 @@ if (typeof chrome === 'object' && typeof chrome.identity === 'object' && chrome.
                                     accountID: account.id,
                                     propertyID: property.id,
                                     id: profile.id,
-                                    name: account.name + '-' + property.name + '-' + profile.name
-                                });
+                                    accountName: account.name,
+									name: property.name,
+									gAnalContent: profile.name,
+									entityName: account.name + '-' + property.name + '-' + profile.name
+								});
                             });
                         });
                     });
