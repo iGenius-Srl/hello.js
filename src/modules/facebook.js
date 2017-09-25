@@ -43,6 +43,8 @@
                 if (p.options.force) {
                     p.qs.auth_type = 'reauthenticate';
                 }
+
+                p.qs.display = p.options.display || 'popup';                
             },
 
             logout: function(callback, options) {
