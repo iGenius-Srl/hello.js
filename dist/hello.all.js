@@ -1,4 +1,4 @@
-/*! @igenius_dev/hellojs v1.2.3 | (c) 2012-2017 Andrew Dodson | MIT https://adodson.com/hello.js/LICENSE */
+/*! @igenius_dev/hellojs v1.2.4 | (c) 2012-2017 Andrew Dodson | MIT https://adodson.com/hello.js/LICENSE */
 // ES5 Object.create
 if (!Object.create) {
 
@@ -3312,6 +3312,8 @@ if (typeof chrome === 'object' && typeof chrome.identity === 'object' && chrome.
                 if (p.options.force) {
                     p.qs.auth_type = 'reauthenticate';
                 }
+
+                p.qs.display = p.options.display || 'popup';                
             },
 
             logout: function(callback, options) {
