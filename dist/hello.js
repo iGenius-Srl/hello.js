@@ -1,4 +1,4 @@
-/*! @igenius_dev/hellojs v2.0.1 | (c) 2012-2017 Andrew Dodson | MIT https://adodson.com/hello.js/LICENSE */
+/*! @igenius_dev/hellojs v2.0.3 | (c) 2012-2017 Andrew Dodson | MIT https://adodson.com/hello.js/LICENSE */
 // ES5 Object.create
 if (!Object.create) {
 
@@ -2257,7 +2257,7 @@ hello.utils.extend(hello.utils, {
 			var headers = headersToJSON(r.getAllResponseHeaders());
 			headers.statusCode = r.status;
 
-			callback(json || (method === 'GET' ? error('empty_response', 'Could not get resource') : {}), headers);
+			callback(json || (method === 'GET' ? error('empty_response', JSON.stringify(e)) : {}), headers);
 		};
 
 		r.onerror = function(e) {
@@ -2267,7 +2267,7 @@ hello.utils.extend(hello.utils, {
 			}
 			catch (_e) {}
 
-			callback(json || error('access_denied', 'Could not get resource'));
+			callback(json || error('access_denied', JSON.stringify(e)));
 		};
 
 		var x;
