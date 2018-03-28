@@ -5696,6 +5696,9 @@ if (typeof chrome === 'object' && typeof chrome.identity === 'object' && chrome.
 
                     var data = [];
                     res.items.forEach(function(account) {
+						if(!account.webProperties) {
+                            return null;
+                        }
                         account.webProperties.forEach(function(property) {
                             property.profiles.forEach(function(profile) {
                                 data.push({
