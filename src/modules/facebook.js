@@ -237,6 +237,7 @@
 			return {
 				id: d.id,
 				name: d.name,
+				username: d.username,
 				currency: d.currency,
 				image: d.picture && d.picture.data && d.picture.data.url ? d.picture.data.url : null
 			};
