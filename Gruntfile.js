@@ -1,24 +1,6 @@
 module.exports = function config(grunt) {
-    var source = ['Gruntfile.js', 'src/**/*.js', 'tests/**/*.js', '!tests/specs/libs/**/*'];
-
     grunt.initConfig({
         pkg: grunt.file.readJSON('package.json'),
-        jshint: {
-            src: source,
-            options: {
-                globals: {
-                    console: true,
-                    module: true,
-                    document: true
-                },
-                sub: true,
-                es3: true
-            }
-        },
-        mocha_phantomjs: {
-            all: ['tests/specs/index.html']
-        },
-        bumpup: ['package.json'],
         shunt: {
             build: {
                 'dist/hello.js': [
@@ -55,47 +37,10 @@ module.exports = function config(grunt) {
                 'dist/hello.all.min.js': 'dist/hello.all.js'
             }
         },
-        usebanner: {
-            build: {
-                options: {
-                    position: 'top',
-                    banner:
-						'/*! <%= pkg.name %> v<%= pkg.version %> | (c) 2012-<%= (new Date()).getFullYear() %> <%= pkg.author.name %> | <%= pkg.license %> <%= pkg.homepage %>/LICENSE */',
-                    linebreak: true
-                },
-                files: {
-                    src: ['dist/hello.*']
-                }
-            }
-        },
-        watch: {
-            files: ['src/**/*.js', 'tests/specs/**/*'],
-            tasks: ['test']
-        }
     });
 
-    grunt.loadNpmTasks('grunt-banner');
-    grunt.loadNpmTasks('grunt-bumpup');
-    grunt.loadNpmTasks('grunt-contrib-jshint');
-    grunt.loadNpmTasks('grunt-contrib-watch');
-    grunt.loadNpmTasks('grunt-mocha-phantomjs');
-    grunt.loadNpmTasks('grunt-jscs');
-    grunt.loadNpmTasks('browserstack-runner');
     grunt.loadNpmTasks('shunt');
 
-    grunt.registerTask('mocha', ['mocha_phantomjs']);
-    grunt.registerTask('test', ['jshint', 'mocha']);
-    grunt.registerTask('deploy', [
-        'test',
-        'shunt:build',
-        'shunt:minify',
-        'bumpup',
-        'updateInitConfig',
-        'usebanner:build'
-    ]);
-    grunt.registerTask('default', ['shunt:build', 'shunt:minify', 'usebanner:build']);
+    grunt.registerTask('default', ['shunt:build', 'shunt:minify']);
 
-    grunt.registerTask('updateInitConfig', 'Redefine pkg after change in package.json', function () {
-        grunt.config.set('pkg', grunt.file.readJSON('package.json'));
-    });
 };
