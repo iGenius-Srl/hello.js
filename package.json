@@ -25,9 +25,7 @@
 	},
 	"license": "MIT",
 	"scripts": {
-		"test": "grunt test",
-		"prepublish": "grunt",
-		"preversion": "npm t"
+		"prepublish": "grunt"
 	},
 	"devDependencies": {
 		"browserstack-runner": "^0.3.7",
