@@ -1,5 +1,4 @@
-module.exports = function(grunt) {
-
+module.exports = function config(grunt) {
     var source = ['Gruntfile.js', 'src/**/*.js', 'tests/**/*.js', '!tests/specs/libs/**/*'];
 
     grunt.initConfig({
@@ -16,12 +15,6 @@ module.exports = function(grunt) {
                 es3: true
             }
         },
-        jscs: {
-            src: source,
-            options: {
-                config: '.jscsrc'
-            }
-        },
         mocha_phantomjs: {
             all: ['tests/specs/index.html']
         },
@@ -31,16 +24,12 @@ module.exports = function(grunt) {
                 'dist/hello.js': [
                     'src/hello.polyfill.js',
                     'src/hello.js',
-                    'src/hello.chromeapp.js',
-                    'src/hello.phonegap.js',
                     'src/hello.amd.js',
                     'src/hello.commonjs.js'
                 ],
                 'dist/hello.all.js': [
                     'src/hello.polyfill.js',
                     'src/hello.js',
-                    'src/hello.chromeapp.js',
-                    'src/hello.phonegap.js',
                     'src/modules/dropbox.js',
                     'src/modules/facebook.js',
                     'src/modules/flickr.js',
@@ -70,7 +59,8 @@ module.exports = function(grunt) {
             build: {
                 options: {
                     position: 'top',
-                    banner: '/*! <%= pkg.name %> v<%= pkg.version %> | (c) 2012-<%= (new Date()).getFullYear() %> <%= pkg.author.name %> | <%= pkg.license %> <%= pkg.homepage %>/LICENSE */',
+                    banner:
+						'/*! <%= pkg.name %> v<%= pkg.version %> | (c) 2012-<%= (new Date()).getFullYear() %> <%= pkg.author.name %> | <%= pkg.license %> <%= pkg.homepage %>/LICENSE */',
                     linebreak: true
                 },
                 files: {
@@ -94,11 +84,18 @@ module.exports = function(grunt) {
     grunt.loadNpmTasks('shunt');
 
     grunt.registerTask('mocha', ['mocha_phantomjs']);
-    grunt.registerTask('test', ['jscs', 'jshint', 'mocha']);
-    grunt.registerTask('deploy', ['test', 'shunt:build', 'shunt:minify', 'bumpup', 'updateInitConfig', 'usebanner:build']);
+    grunt.registerTask('test', ['jshint', 'mocha']);
+    grunt.registerTask('deploy', [
+        'test',
+        'shunt:build',
+        'shunt:minify',
+        'bumpup',
+        'updateInitConfig',
+        'usebanner:build'
+    ]);
     grunt.registerTask('default', ['shunt:build', 'shunt:minify', 'usebanner:build']);
 
-    grunt.registerTask('updateInitConfig', 'Redefine pkg after change in package.json', function() {
+    grunt.registerTask('updateInitConfig', 'Redefine pkg after change in package.json', function () {
         grunt.config.set('pkg', grunt.file.readJSON('package.json'));
     });
 };

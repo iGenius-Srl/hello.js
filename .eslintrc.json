@@ -1,0 +1,16 @@
+{
+	"env": {
+		"browser": true,
+		"amd": true,
+		"commonjs": true,
+		"node": true
+	},
+	"globals": {
+		"hello": true
+	},
+	"extends": "eslint:recommended",
+	"rules": {
+		"no-useless-escape": "off",
+		"no-console": "off"
+	}
+}
