@@ -3042,7 +3042,7 @@ hello.utils.responseHandler(window, window.opener || window.parent);
 })(hello);
 
 (function(hello) {
-	var version = "2.10";
+	var version = "2.11";
 	hello.init({
 		facebook: {
 			name: "Facebook",
@@ -3280,6 +3280,7 @@ hello.utils.responseHandler(window, window.opener || window.parent);
 			return {
 				id: d.id,
 				name: d.name,
+				username: d.username,
 				currency: d.currency,
 				image: d.picture && d.picture.data && d.picture.data.url ? d.picture.data.url : null
 			};
@@ -5393,102 +5394,105 @@ hello.utils.responseHandler(window, window.opener || window.parent);
 })(hello);
 
 (function(hello) {
+	var contactsUrl =
+		"https://www.google.com/m8/feeds/contacts/default/full?v=3.0&alt=json&max-results=@{limit|1000}&start-index=@{start|1}";
 
-    var contactsUrl = 'https://www.google.com/m8/feeds/contacts/default/full?v=3.0&alt=json&max-results=@{limit|1000}&start-index=@{start|1}';
+	hello.init({
+		gAnalytics: {
+			name: "Google Analytics",
 
-    hello.init({
-        gAnalytics: {
+			// See: http://code.google.com/apis/accounts/docs/OAuth2UserAgent.html
+			oauth: {
+				version: 2,
+				auth: "https://accounts.google.com/o/oauth2/auth",
+				grant: "https://accounts.google.com/o/oauth2/token"
+			},
 
-            name: 'Google Analytics',
+			// Authorization scopes
+			scope: {
+				basic: "https://www.googleapis.com/auth/plus.me profile",
+				email: "email",
+				birthday: "",
+				events: "",
+				photos: "https://picasaweb.google.com/data/",
+				videos: "http://gdata.youtube.com",
+				friends:
+					"https://www.google.com/m8/feeds, https://www.googleapis.com/auth/plus.login",
+				files: "https://www.googleapis.com/auth/drive.readonly",
+				publish: "",
+				publish_files: "https://www.googleapis.com/auth/drive",
+				create_event: "",
+				offline_access: ""
+			},
 
-            // See: http://code.google.com/apis/accounts/docs/OAuth2UserAgent.html
-            oauth: {
-                version: 2,
-                auth: 'https://accounts.google.com/o/oauth2/auth',
-                grant: 'https://accounts.google.com/o/oauth2/token'
-            },
+			scope_delim: " ",
 
-            // Authorization scopes
-            scope: {
-                basic: 'https://www.googleapis.com/auth/plus.me profile',
-                email: 'email',
-                birthday: '',
-                events: '',
-                photos: 'https://picasaweb.google.com/data/',
-                videos: 'http://gdata.youtube.com',
-                friends: 'https://www.google.com/m8/feeds, https://www.googleapis.com/auth/plus.login',
-                files: 'https://www.googleapis.com/auth/drive.readonly',
-                publish: '',
-                publish_files: 'https://www.googleapis.com/auth/drive',
-                create_event: '',
-                offline_access: ''
-            },
+			login: function(p) {
+				if (p.qs.display === "none") {
+					// Google doesn't like display=none
+					p.qs.display = "";
+				}
 
-            scope_delim: ' ',
+				if (p.qs.response_type === "code") {
+					// Let's set this to an offline access to return a refresh_token
+					p.qs.access_type = "offline";
+				}
 
-            login: function(p) {
-                if (p.qs.display === 'none') {
-                    // Google doesn't like display=none
-                    p.qs.display = '';
-                }
+				// Reauthenticate
+				// https://developers.google.com/identity/protocols/
+				if (p.options.force) {
+					p.qs.approval_prompt = "force";
+				}
+			},
 
-                if (p.qs.response_type === 'code') {
+			// API base URI
+			base: "https://www.googleapis.com/",
 
-                    // Let's set this to an offline access to return a refresh_token
-                    p.qs.access_type = 'offline';
-                }
+			// Map GET requests
+			get: {
+				me: "plus/v1/people/me",
+				list: "analytics/v3/management/accountSummaries"
+			},
+			wrap: {
+				list: function(res) {
+					if (res.error && res.error.code === 403) {
+						return {
+							error: {
+								status: 404,
+								message: "you have no pages"
+							}
+						};
+					}
 
-                // Reauthenticate
-                // https://developers.google.com/identity/protocols/
-                if (p.options.force) {
-                    p.qs.approval_prompt = 'force';
-                }
-            },
+					if (res.error) {
+						return res;
+					}
 
-            // API base URI
-            base: 'https://www.googleapis.com/',
-
-            // Map GET requests
-            get: {
-                me: 'plus/v1/people/me',
-                list: 'analytics/v3/management/accountSummaries'
-            },
-            wrap: {
-                list: function(res) {
-                    if (res.error && res.error.code === 403) {
-                        return {
-                            error: {
-                                status: 404,
-                                message: 'you have no pages'
-                            }
-                        }
-                    }
-
-                    if (res.error) {
-                        return res;
-                    }
-
-                    var data = [];
-                    res.items.forEach(function(account) {
-                        account.webProperties.forEach(function(property) {
-                            property.profiles.forEach(function(profile) {
-                                data.push({
-                                    accountID: account.id,
-                                    propertyID: property.id,
-                                    id: profile.id,
-                                    accountName: account.name,
+					var data = [];
+					var items = res.items || [];
+					items.forEach(function(account) {
+						var webProperties = account.webProperties || [];
+						webProperties.forEach(function(property) {
+							var profiles = property.profiles || [];
+							profiles.forEach(function(profile) {
+								data.push({
+									accountID: account.id,
+									propertyID: property.id,
+									id: profile.id,
+									accountName: account.name,
 									name: property.name,
 									gAnalContent: profile.name,
-									entityName: account.name + '-' + property.name + '-' + profile.name
+									entityName:
+										account.name + "-" + property.name + "-" + profile.name
 								});
-                            });
-                        });
-                    });
-                    return data;
-                }
-            }
-        }
-    });
+							});
+						});
+					});
+					return data;
+				}
+			}
+		}
+	});
 })(hello);
 
 (function(hello) {
