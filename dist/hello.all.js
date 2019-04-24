@@ -1,4 +1,4 @@
-/*! hellojs v1.13.1 | (c) 2012-2016 Andrew Dodson | MIT https://adodson.com/hello.js/LICENSE */
+/*! @igenius_dev/hellojs v1.0.0 | (c) 2012-2019 Andrew Dodson | MIT https://adodson.com/hello.js/LICENSE */
 // ES5 Object.create
 if (!Object.create) {
 
@@ -3312,10 +3312,6 @@ if (typeof chrome === 'object' && typeof chrome.identity === 'object' && chrome.
 				if (p.options.force) {
 					p.qs.auth_type = 'reauthenticate';
 				}
-
-				// The facebook login window is a different size.
-				p.options.popup.width = 580;
-				p.options.popup.height = 400;
 			},
 
 			logout: function(callback, options) {
@@ -4865,8 +4861,8 @@ if (typeof chrome === 'object' && typeof chrome.identity === 'object' && chrome.
 			oauth: {
 				version: 2,
 				response_type: 'code',
-				auth: 'https://www.linkedin.com/uas/oauth2/authorization',
-				grant: 'https://www.linkedin.com/uas/oauth2/accessToken'
+				auth: 'https://www.linkedin.com/oauth/v2/authorization',
+				grant: 'https://www.linkedin.com/oauth/v2/accessToken'
 			},
 
 			// Refresh the access_token once expired
@@ -4890,9 +4886,9 @@ if (typeof chrome === 'object' && typeof chrome.identity === 'object' && chrome.
 
 			get: {
 				me: 'people/~:(picture-url,first-name,last-name,id,formatted-name,email-address)',
-
-				// See: http://developer.linkedin.com/documents/get-network-updates-and-statistics-api
-				'me/share': 'people/~/network/updates?count=@{limit|250}'
+				'me/share': 'people/~/network/updates?count=@{limit|250}',
+				list:
+					'organizationalEntityAcls?q=roleAssignee&role=ADMINISTRATOR&state=APPROVED&projection=(elements*(*, organizationalTarget~(id,localizedName,logoV2(original~:playableStreams))))'
 			},
 
 			post: {

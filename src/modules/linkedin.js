@@ -7,8 +7,8 @@
 			oauth: {
 				version: 2,
 				response_type: 'code',
-				auth: 'https://www.linkedin.com/uas/oauth2/authorization',
-				grant: 'https://www.linkedin.com/uas/oauth2/accessToken'
+				auth: 'https://www.linkedin.com/oauth/v2/authorization',
+				grant: 'https://www.linkedin.com/oauth/v2/accessToken'
 			},
 
 			// Refresh the access_token once expired
@@ -32,9 +32,9 @@
 
 			get: {
 				me: 'people/~:(picture-url,first-name,last-name,id,formatted-name,email-address)',
-
-				// See: http://developer.linkedin.com/documents/get-network-updates-and-statistics-api
-				'me/share': 'people/~/network/updates?count=@{limit|250}'
+				'me/share': 'people/~/network/updates?count=@{limit|250}',
+				list:
+					'organizationalEntityAcls?q=roleAssignee&role=ADMINISTRATOR&state=APPROVED&projection=(elements*(*, organizationalTarget~(id,localizedName,logoV2(original~:playableStreams))))'
 			},
 
 			post: {
