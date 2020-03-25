@@ -1,5 +1,5 @@
 (function(hello) {
-	var version = "4.0";
+	var version = "5.0";
 	hello.init({
 		facebook: {
 			name: "Facebook",
